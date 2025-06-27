@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+/* 自定义 CSS 变量 */
+:root {
+  /* 主色调 - 与 Ant Design 保持一致 */
+  --primary-color: #1677ff;
+  --primary-color-hover: #4096ff;
+  --primary-color-active: #0958d9;
+  
+  /* 功能色 */
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  
+  /* 中性色 */
+  --color-text-1: #262626;
+  --color-text-2: #595959;
+  --color-text-3: #8c8c8c;
+  --color-text-4: #bfbfbf;
+  
+  /* 背景色 */
+  --color-bg-1: #ffffff;
+  --color-bg-2: #fafafa;
+  --color-bg-3: #f5f5f5;
+  --color-bg-4: #f0f0f0;
+  
+  /* 边框色 */
+  --color-border-1: #f0f0f0;
+  --color-border-2: #d9d9d9;
+  --color-border-3: #bfbfbf;
+  --color-border-4: #8c8c8c;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  background-color: var(--color-bg-2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin: 8px;
+    padding: 16px;
+  }
+  
+  .metric-card {
+    padding: 16px;
+  }
+  
+  .chart-container {
+    padding: 16px;
+  }
+}
+
+/* Ant Design 组件样式覆盖 */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+}
+
+.ant-btn {
+  border-radius: 6px;
+}
+
+.ant-input,
+.ant-input-password {
+  border-radius: 6px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

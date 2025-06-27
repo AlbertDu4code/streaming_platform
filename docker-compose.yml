@@ -1,0 +1,83 @@
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: streaming-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: streaming_usage
+      MYSQL_USER: streaming_user
+      MYSQL_PASSWORD: streaming_pass_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./docker/mysql/logs:/var/log/mysql
+      - mysql_run:/var/run/mysqld
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    networks:
+      - streaming_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      timeout: 20s
+      retries: 10
+
+  # InfluxDB 时序数据库
+  influxdb:
+    image: influxdb:2.0
+    container_name: streaming-influxdb
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: influx_pass_123
+      DOCKER_INFLUXDB_INIT_ORG: streaming-org
+      DOCKER_INFLUXDB_INIT_BUCKET: usage-data
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: my_super_secret_admin_token_123456789
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - streaming_network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: streaming-redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_pass_123 --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - streaming_network
+
+  # 数据库管理工具
+  adminer:
+    image: adminer:4.8.1
+    container_name: streaming-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - streaming_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  streaming_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  mysql_run:
+  influxdb_data:
+  redis_data:

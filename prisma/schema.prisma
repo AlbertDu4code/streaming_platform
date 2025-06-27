@@ -1,0 +1,225 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户模型
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?   // NextAuth 使用 image 而不是 avatar
+  emailVerified DateTime?
+  password      String?   // 用于 credentials 登录
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // 认证相关
+  accounts Account[]
+  sessions Session[]
+
+  // 用户配置
+  preferences   UserPreferences?
+  budgets       Budget[]
+  streamingAccounts StreamingAccount[]
+  usageRecords  UsageRecord[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// 第三方账户认证
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// 用户会话
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// 验证令牌
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// 用户偏好设置
+model UserPreferences {
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 通知设置
+  emailNotifications    Boolean @default(true)
+  budgetAlerts         Boolean @default(true)
+  weeklyReports        Boolean @default(true)
+  monthlyReports       Boolean @default(true)
+
+  // 显示设置
+  defaultCurrency      String  @default("USD")
+  timeZone            String  @default("UTC")
+  dateFormat          String  @default("YYYY-MM-DD")
+
+  // 隐私设置
+  shareUsageData      Boolean @default(false)
+  anonymousAnalytics  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+// 流媒体服务枚举
+enum StreamingService {
+  NETFLIX
+  AMAZON_PRIME
+  DISNEY_PLUS
+  HULU
+  HBO_MAX
+  SPOTIFY
+  APPLE_MUSIC
+  YOUTUBE_PREMIUM
+  TWITCH
+  OTHER
+}
+
+// 流媒体账户
+model StreamingAccount {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  service     StreamingService
+  accountName String?          // 账户昵称
+  isActive    Boolean          @default(true)
+  
+  // 订阅信息
+  monthlyFee  Decimal?         @db.Decimal(10, 2)
+  currency    String           @default("USD")
+  billingDate Int?             // 每月账单日期 (1-31)
+  
+  // API 集成信息
+  apiKey      String?
+  username    String?
+  
+  // 统计数据
+  usageRecords UsageRecord[]
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([userId, service, accountName])
+  @@map("streaming_accounts")
+}
+
+// 使用记录
+model UsageRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accountId String
+  account   StreamingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  // 使用数据
+  date        DateTime @db.Date
+  duration    Int      // 使用时长(分钟)
+  episodeCount Int?    // 观看剧集数
+  dataUsage   Decimal? @db.Decimal(10, 2) // 数据使用量(GB)
+  
+  // 内容信息
+  contentType String?  // 电影、电视剧、音乐等
+  genre       String?  // 类型
+  quality     String?  // 画质/音质
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([accountId, date])
+  @@index([userId, date])
+  @@map("usage_records")
+}
+
+// 预算管理
+model Budget {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("USD")
+  period      String   // MONTHLY, YEARLY
+  
+  // 预算范围
+  services    String?  // JSON数组，包含的服务
+  startDate   DateTime
+  endDate     DateTime?
+  
+  // 告警设置
+  alertAt50   Boolean  @default(true)
+  alertAt80   Boolean  @default(true)
+  alertAt100  Boolean  @default(true)
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("budgets")
+}
+
+// 通知记录
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // BUDGET_ALERT, WEEKLY_REPORT, MONTHLY_REPORT, SYSTEM
+  title     String
+  message   String   @db.Text
+  
+  isRead    Boolean  @default(false)
+  sentAt    DateTime?
+  
+  // 相关数据
+  budgetId  String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
