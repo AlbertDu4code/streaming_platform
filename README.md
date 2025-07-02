@@ -1,56 +1,59 @@
 # Streaming Usage Platform
 
-一个现代化的流媒体使用监控平台，帮助用户追踪和管理多个流媒体服务的使用情况、消费和预算。
+一个现代化的视频直播服务管理平台，提供内容接入、分发网络、大规模分布式实时转码等专业直播服务能力。
 
-## 🚀 功能特性
+## 🚀 核心优势
 
-### 📊 使用监控
-- **多服务支持**: Netflix、Amazon Prime、Disney+、Hulu、HBO Max、Spotify、Apple Music、YouTube Premium、Twitch 等
-- **实时数据追踪**: 观看时长、剧集数量、数据使用量等详细统计
-- **可视化图表**: 使用 ECharts 提供丰富的图表展示
-- **时间维度分析**: 支持日、周、月、年等不同时间维度的数据分析
+### 🎥 专业直播服务
+- **内容接入**: 支持RTMP、RTS等多种推流协议
+- **分发网络**: 全球CDN加速，保障高质量内容分发
+- **实时转码**: 大规模分布式转码，支持多码率自适应
+- **超低延时**: 毫秒级延时，提供极致直播体验
+- **高并发**: 轻松应对百万级并发观看
 
-### 💰 预算管理
-- **预算设置**: 为不同服务设置月度/年度预算
-- **智能告警**: 50%、80%、100% 预算使用率告警
-- **消费分析**: 详细的消费趋势和预算执行情况
-- **多币种支持**: 支持 USD、EUR、CNY 等多种货币
+### 📊 直播监控管理
+- **实时监控**: 推流状态、观看人数、带宽使用等关键指标
+- **多维度统计**: 支持分区域、分辨率、时间维度的数据分析
+- **可视化图表**: 基于ECharts的专业数据可视化
+- **告警系统**: 智能监控异常状态，及时预警
 
-### 🔐 用户系统
-- **多种登录方式**: 支持邮箱密码和 OAuth 登录
-- **个性化设置**: 用户偏好、通知设置、隐私控制
-- **多账户管理**: 支持同一服务的多个账户
+### 🌐 多区域支持
+- **华东区域**: 主要服务区域
+- **华北区域**: 覆盖华北地区
+- **华南区域**: 服务华南用户
+- **弹性扩展**: 支持更多区域接入
 
-### 📱 现代化界面
-- **响应式设计**: 支持桌面端和移动端
-- **暗色主题**: 基于 Tailwind CSS 的现代化 UI
-- **流畅动画**: 使用 Framer Motion 提供流畅的用户体验
-- **实时更新**: 基于 React Query 的数据实时同步
+### 🎛 流管理功能
+- **推流管理**: 支持多路推流，实时状态监控
+- **拉流分发**: 多终端适配，智能码率切换
+- **录制回放**: 自动录制，云端存储
+- **安全防护**: 防盗链、访问控制、内容审核
 
-## 🛠 技术栈
+## 🛠 技术架构
 
-### 前端
+### 前端技术栈
 - **框架**: Next.js 15.3.3 (App Router)
 - **UI 库**: React 19 + Ant Design 5.26.2
-- **样式**: Tailwind CSS 4
 - **状态管理**: Zustand 5.0.5
 - **数据获取**: TanStack React Query 5.80.7
 - **表单处理**: React Hook Form 7.58.1 + Zod 3.25.67
-- **图表**: ECharts 5.6.0
-- **动画**: Framer Motion 12.18.1
+- **图表组件**: ECharts 5.6.0
+- **动画效果**: Framer Motion 12.18.1
 
-### 后端
-- **数据库**: MySQL 8.0 (主数据库) + InfluxDB 2.0 (时序数据)
-- **缓存**: Redis 7
+### 后端架构
+- **主数据库**: MySQL 8.0 (用户、直播流元数据)
+- **时序数据库**: InfluxDB 2.0 (监控数据、统计指标)
+- **缓存系统**: Redis 7 (会话、热点数据)
 - **ORM**: Prisma 6.10.0
-- **认证**: NextAuth.js 4.24.11
-- **API**: Next.js API Routes
+- **认证系统**: NextAuth.js 4.24.11
+- **API 服务**: Next.js API Routes
 
-### 部署
+### 基础设施
 - **容器化**: Docker + Docker Compose
 - **数据库管理**: Adminer 4.8.1
+- **监控服务**: 自研监控系统
 
-## 📦 快速开始
+## 📦 快速部署
 
 ### 环境要求
 - Node.js 18+ 
@@ -60,7 +63,7 @@
 ### 1. 克隆项目
 ```bash
 git clone <repository-url>
-cd streaming-usage-platform
+cd streaming_platform
 ```
 
 ### 2. 安装依赖
@@ -78,32 +81,40 @@ DATABASE_URL="mysql://streaming_user:streaming_pass_123@localhost:3306/streaming
 NEXTAUTH_SECRET=your-super-secret-key-here
 NEXTAUTH_URL=http://localhost:4000
 
-# InfluxDB 配置
+# InfluxDB 配置 (监控数据)
 INFLUX_URL=http://localhost:8086
 INFLUX_TOKEN=my_super_secret_admin_token_123456789
 INFLUX_ORG=streaming-org
 INFLUX_BUCKET=usage-data
 
-# Redis 配置
+# Redis 配置 (缓存)
 REDIS_URL=redis://:redis_pass_123@localhost:6379
+
+# 直播服务配置 (可选)
+LIVE_PUSH_DOMAIN=push.example.com
+LIVE_PULL_DOMAIN=pull.example.com
+LIVE_API_KEY=your_live_api_key
 ```
 
-### 4. 启动服务
+### 4. 启动基础服务
 ```bash
-# 一键启动所有服务（推荐）
+# 一键启动数据库服务
 npm run setup-db
 
-# 或者分步启动
+# 或手动启动
 docker-compose up -d
 ```
 
-### 5. 数据库迁移
+### 5. 数据库初始化
 ```bash
 # 生成 Prisma 客户端
 npx prisma generate
 
-# 运行数据库迁移
-npx prisma migrate dev
+# 创建数据库表
+npx prisma db push
+
+# 初始化测试数据 (可选)
+curl -X POST http://localhost:4000/api/init-data
 ```
 
 ### 6. 启动应用
@@ -116,145 +127,171 @@ npm run dev
 ## 🏗 项目结构
 
 ```
-streaming-usage-platform/
+streaming_platform/
 ├── src/
 │   ├── app/                    # Next.js App Router
-│   │   ├── actions/           # Server Actions
-│   │   │   └── auth.ts        # 认证相关操作
 │   │   ├── api/               # API 路由
-│   │   │   ├── auth/          # 认证 API
-│   │   │   ├── data/          # 数据 API
+│   │   │   ├── auth/          # 用户认证 API
+│   │   │   ├── data/          # 监控数据 API
 │   │   │   └── init-data/     # 数据初始化 API
 │   │   ├── auth/              # 认证页面
 │   │   │   ├── login/         # 登录页面
 │   │   │   └── register/      # 注册页面
-│   │   ├── monitoring/        # 监控页面
-│   │   ├── usage/             # 使用统计页面
+│   │   ├── monitoring/        # 直播监控面板
+│   │   │   └── components/    # 监控组件
+│   │   ├── streams/           # 直播流管理 (开发中)
 │   │   ├── globals.css        # 全局样式
 │   │   ├── layout.tsx         # 根布局
-│   │   ├── page.tsx           # 首页
-│   │   └── providers.tsx      # 全局 Provider
-│   ├── lib/                   # 工具库
+│   │   └── page.tsx           # 首页
+│   ├── lib/                   # 核心库
 │   │   ├── auth/              # 认证配置
-│   │   ├── db/                # 数据库配置
-│   │   │   ├── prisma.ts      # Prisma 客户端
-│   │   │   └── redis.ts       # Redis 客户端
-│   │   ├── theme.ts           # 主题配置
+│   │   ├── db/                # 数据库客户端
+│   │   ├── influxdb.ts        # InfluxDB 客户端
+│   │   ├── theme.ts           # Ant Design 主题
 │   │   └── utils.ts           # 工具函数
-│   ├── types/                 # TypeScript 类型定义
-│   └── middleware.ts          # 中间件
+│   ├── types/                 # TypeScript 类型
+│   └── middleware.ts          # 路由中间件
 ├── prisma/                    # 数据库配置
-│   ├── schema.prisma          # 数据库模型
+│   ├── schema.prisma          # 数据模型定义
 │   └── migrations/            # 数据库迁移
-├── docker/                    # Docker 配置
-│   ├── mysql/                 # MySQL 配置
-│   ├── influxdb/              # InfluxDB 配置
-│   └── redis/                 # Redis 配置
-├── scripts/                   # 脚本文件
-├── public/                    # 静态资源
-├── docker-compose.yml         # Docker 服务配置
-├── tailwind.config.ts         # Tailwind 配置
-├── next.config.ts             # Next.js 配置
+├── docker/                    # Docker 配置文件
+├── scripts/                   # 脚本工具
+├── docker-compose.yml         # 服务编排
 └── package.json               # 项目配置
 ```
 
-## 🗄 数据库设计
+## 🗄 数据模型设计
 
-### 核心模型
+### 核心数据模型
 
 #### User (用户)
-- 基本信息：邮箱、姓名、头像
-- 认证信息：密码、邮箱验证
-- 关联：账户、会话、偏好设置、预算、使用记录
+```typescript
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
 
-#### StreamingAccount (流媒体账户)
-- 服务类型：Netflix、Disney+ 等
-- 订阅信息：月费、币种、账单日期
-- API 集成：API 密钥、用户名
-- 关联：用户、使用记录
+#### LiveStream (直播流) - 规划中
+```typescript
+model LiveStream {
+  id           String      @id @default(cuid())
+  userId       String
+  name         String      // 流名称
+  streamKey    String      @unique // 推流密钥
+  region       String      // 区域 (华东/华北/华南)
+  resolution   String      // 分辨率 (720P/1080P/4K)
+  bitrate      Int         // 码率 (kbps)
+  frameRate    Int         // 帧率 (fps)
+  status       StreamStatus // 流状态
+  pushUrl      String      // 推流地址
+  pullUrl      String      // 拉流地址
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+}
 
-#### UsageRecord (使用记录)
-- 使用数据：日期、时长、剧集数、数据使用量
-- 内容信息：类型、分类、质量
-- 关联：用户、账户
+enum StreamStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+```
 
-#### Budget (预算)
-- 预算信息：名称、金额、币种、周期
-- 告警设置：50%、80%、100% 告警阈值
-- 关联：用户
+### 监控数据 (InfluxDB)
+- **实时指标**: 推流状态、观看人数、带宽使用
+- **历史数据**: 流量统计、用户行为、服务质量
+- **告警数据**: 异常事件、性能指标
 
 ## 🔌 API 接口
 
-### 认证相关
-- `POST /api/auth/login` - 用户登录
+### 认证系统
 - `POST /api/auth/register` - 用户注册
+- `POST /api/auth/callback/credentials` - 用户登录
 - `GET /api/auth/session` - 获取会话信息
 
-### 数据相关
-- `GET /api/data/usage` - 获取使用数据
-- `POST /api/data/usage` - 添加使用记录
-- `GET /api/data/budget` - 获取预算信息
-- `POST /api/data/budget` - 创建预算
+### 监控数据
+- `GET /api/data` - 获取监控数据
+  - 支持查询参数: `metric`, `timeRange`, `region`
+  - 返回格式化的图表数据
 
-### 初始化
+### 数据管理
 - `POST /api/init-data` - 初始化测试数据
+- `GET /api/data/streams` - 获取直播流列表 (规划中)
+- `POST /api/data/streams` - 创建直播流 (规划中)
 
-## 🎨 界面预览
+## 🎨 功能特性
 
-### 主要页面
-- **首页**: 概览仪表板，显示关键指标
-- **监控页面**: 详细的使用数据图表
-- **使用统计**: 按服务分类的使用情况
-- **预算管理**: 预算设置和消费分析
-- **用户设置**: 个人偏好和通知设置
+### 直播监控面板
+- **实时概览**: 关键指标卡片展示
+- **趋势图表**: 多维度数据可视化
+- **区域分析**: 按地域统计服务质量
+- **性能监控**: 延时、丢包率等关键指标
 
-### 特色功能
-- **实时图表**: 使用 ECharts 展示数据趋势
-- **响应式布局**: 适配各种屏幕尺寸
-- **暗色主题**: 护眼的暗色界面
-- **流畅动画**: 页面切换和交互动画
+### 用户认证系统
+- **安全登录**: 基于NextAuth.js的认证机制
+- **会话管理**: JWT token + Redis会话存储
+- **权限控制**: 基于角色的访问控制
 
-## 🚀 部署
+### 响应式设计
+- **多端适配**: 支持桌面端、平板、手机
+- **现代UI**: 基于Ant Design的专业界面
+- **实时更新**: 数据自动刷新，无需手动操作
+
+## 🚀 部署指南
 
 ### 开发环境
 ```bash
+# 开发服务器
 npm run dev
+
+# 查看应用
+open http://localhost:4000
 ```
 
-### 生产环境
+### 生产部署
 ```bash
-# 构建应用
+# 构建生产版本
 npm run build
 
 # 启动生产服务器
 npm start
 ```
 
-### Docker 部署
+### Docker 容器化
 ```bash
-# 构建镜像
-docker build -t streaming-usage-platform .
+# 构建应用镜像
+docker build -t apsara-live-platform .
 
-# 启动服务
+# 启动完整服务栈
 docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
 ```
 
 ## 🔧 开发指南
 
-### 添加新的流媒体服务
-1. 在 `prisma/schema.prisma` 中的 `StreamingService` 枚举添加新服务
-2. 运行 `npx prisma migrate dev` 更新数据库
-3. 在相关组件中添加新服务的图标和配置
+### 添加新的监控指标
+1. 在 InfluxDB 中定义新的测量指标
+2. 更新 `src/lib/influxdb.ts` 中的查询方法
+3. 在监控组件中集成新指标的图表展示
 
-### 自定义图表
-1. 在 `src/app/monitoring/components/` 中创建新的图表组件
-2. 使用 ECharts 配置图表样式
-3. 在页面中集成新组件
+### 扩展直播流管理
+1. 完善 Prisma schema 中的 LiveStream 模型
+2. 实现流管理相关的 API 接口
+3. 开发流管理的前端界面
 
-### 添加新的数据字段
-1. 更新 Prisma schema
-2. 运行数据库迁移
-3. 更新相关的 API 和组件
+### 集成直播服务 API
+1. 配置直播服务 SDK
+2. 实现推拉流地址生成
+3. 集成录制、转码等高级功能
 
 ## 🐛 故障排除
 
@@ -262,96 +299,115 @@ docker-compose up -d
 
 1. **数据库连接失败**
    ```bash
-   # 检查 Docker 服务状态
+   # 检查容器状态
    docker-compose ps
    
-   # 重启数据库服务
-   docker-compose restart mysql influxdb redis
+   # 重启数据库
+   docker-compose restart mysql
    ```
 
-2. **Prisma 客户端错误**
+2. **InfluxDB 连接异常**
    ```bash
-   # 重新生成客户端
-   npx prisma generate
+   # 检查 InfluxDB 状态
+   curl http://localhost:8086/health
    
-   # 重置数据库
-   npx prisma migrate reset
+   # 重启 InfluxDB
+   docker-compose restart influxdb
    ```
 
-3. **端口冲突**
+3. **认证失败**
    ```bash
-   # 检查端口占用
-   lsof -i :4000
+   # 重新生成数据库表
+   npx prisma db push
    
-   # 修改 docker-compose.yml 中的端口映射
+   # 检查环境变量
+   echo $NEXTAUTH_SECRET
    ```
 
-### 日志查看
+### 监控与调试
 ```bash
 # 查看应用日志
-npm run dev
+npm run dev 2>&1 | tee app.log
 
-# 查看 Docker 服务日志
-docker-compose logs -f
+# 查看容器日志
+docker-compose logs -f mysql influxdb redis
 
-# 查看特定服务日志
-docker logs streaming-mysql
-docker logs streaming-influxdb
-docker logs streaming-redis
+# 监控数据库性能
+docker exec -it streaming-mysql mysql -u root -p -e "SHOW PROCESSLIST;"
 ```
 
 ## 📊 性能优化
 
 ### 数据库优化
-- 使用 InfluxDB 存储时序数据
-- Redis 缓存热点数据
-- 数据库索引优化
+- **读写分离**: InfluxDB 处理时序数据，MySQL 处理业务数据
+- **索引优化**: 针对查询频繁的字段建立合适索引
+- **连接池**: 配置数据库连接池，提高并发性能
 
-### 前端优化
-- React Query 数据缓存
-- 组件懒加载
-- 图片优化
+### 缓存策略
+- **Redis 缓存**: 热点数据、会话信息缓存
+- **React Query**: 前端数据缓存和状态管理
+- **CDN 缓存**: 静态资源分发优化
 
-### 监控指标
-- 页面加载时间
-- API 响应时间
-- 数据库查询性能
+### 实时性优化
+- **数据流**: 优化数据采集和传输链路
+- **查询优化**: 针对时序数据优化查询性能
+- **前端优化**: 组件懒加载，减少首屏加载时间
+
+## 🎯 发展路线
+
+### 近期目标 (Q1 2024)
+- ✅ 完成用户认证系统
+- ✅ 实现基础监控面板
+- 🔄 开发直播流管理功能
+- 📋 集成直播服务 API
+
+### 中期规划 (Q2-Q3 2024)
+- 📋 实现实时录制和回放
+- 📋 添加内容审核功能
+- 📋 开发移动端应用
+- 📋 支持多租户架构
+
+### 长期愿景 (Q4 2024+)
+- 📋 AI 智能运营助手
+- 📋 全球多云部署
+- 📋 开放 API 生态
+- 📋 企业级安全认证
 
 ## 🤝 贡献指南
 
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+1. Fork 本项目
+2. 创建功能分支 (`git checkout -b feature/新功能`)
+3. 提交代码 (`git commit -m '添加某个新功能'`)
+4. 推送分支 (`git push origin feature/新功能`)
+5. 创建 Pull Request
 
-### 代码规范
-- 使用 TypeScript 严格模式
-- 遵循 ESLint 和 Prettier 配置
-- 编写单元测试
+### 开发规范
+- 遵循 TypeScript 严格模式
+- 使用 ESLint + Prettier 代码格式化
+- 编写清晰的提交信息
 - 更新相关文档
 
-## 📄 许可证
+## 📄 开源协议
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 MIT 开源协议 - 详见 [LICENSE](LICENSE) 文件。
 
-## 🙏 致谢
+## 🙏 技术致谢
 
-- [Next.js](https://nextjs.org/) - React 框架
-- [Ant Design](https://ant.design/) - UI 组件库
-- [Prisma](https://www.prisma.io/) - 数据库 ORM
-- [ECharts](https://echarts.apache.org/) - 图表库
-- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
+- [Next.js](https://nextjs.org/) - 全栈 React 框架
+- [Ant Design](https://ant.design/) - 企业级 UI 组件库
+- [Prisma](https://www.prisma.io/) - 现代化数据库 ORM
+- [InfluxDB](https://www.influxdata.com/) - 时序数据库
+- [ECharts](https://echarts.apache.org/) - 数据可视化图表库
 
-## 📞 支持
+## 📞 技术支持
 
-如果您遇到问题或有建议，请：
+遇到问题或有建议？
 
-1. 查看 [故障排除](#故障排除) 部分
-2. 搜索现有的 [Issues](../../issues)
-3. 创建新的 Issue 描述问题
-4. 联系项目维护者
+1. 📖 查看 [故障排除](#故障排除) 文档
+2. 🔍 搜索现有 [Issues](../../issues)
+3. 🆕 创建新 Issue 详细描述问题
+4. 💬 联系开发团队
 
 ---
 
-**Streaming Usage Platform** - 让流媒体使用更透明、更智能 🎬 
+**Streaming Usage Platform** - 专业可靠的直播技术解决方案 🎥✨ 

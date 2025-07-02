@@ -14,19 +14,20 @@ interface StreamingTabProps {
 }
 
 export default function StreamingTab({ streamingData }: StreamingTabProps) {
-  // 安全计算统计数据
-  const totalDuration = streamingData.reduce(
-    (sum, s) => sum + (s?.duration || 0),
-    0
-  );
+  // 动态统计数据
   const totalDataUsage = streamingData.reduce(
-    (sum, s) => sum + (s?.bandwidth || 0),
+    (sum, s) => sum + (s.bandwidth || 0),
     0
   );
-  const totalCost = streamingData.reduce(
-    (sum, s) => sum + (s?.bandwidth || 0),
-    0
-  );
+  const totalCost = streamingData.reduce((sum, s) => sum + (s.cost || 0), 0); // 如无cost字段则为0
+  const today = new Date().toISOString().slice(0, 10);
+  const todayWatch = streamingData
+    .filter((s) => s.startTime && s.startTime.startsWith(today))
+    .reduce((sum, s) => sum + (s.duration || 0), 0);
+  const qualities = streamingData.map((s) => s.quality).filter(Boolean);
+  const avgQuality = qualities.length
+    ? qualities.sort()[Math.floor(qualities.length / 2)]
+    : "-";
 
   const columns = [
     {
@@ -127,7 +128,7 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
             <Card>
               <Statistic
                 title="总数据使用"
-                value="0 B"
+                value={formatBytes(totalDataUsage * 1024 * 1024 * 1024)}
                 prefix={<DatabaseOutlined style={{ color: "#00b42a" }} />}
               />
             </Card>
@@ -136,10 +137,10 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
             <Card>
               <Statistic
                 title="总费用"
-                value={0}
+                value={totalCost}
                 precision={2}
                 prefix={<DownOutlined style={{ color: "#f53f3f" }} />}
-                suffix="USD"
+                suffix="￥"
               />
             </Card>
           </Col>
@@ -147,7 +148,7 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
             <Card>
               <Statistic
                 title="平均画质"
-                value="1440P"
+                value={avgQuality}
                 prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
               />
             </Card>
@@ -156,8 +157,8 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
             <Card>
               <Statistic
                 title="今日观看"
-                value="0"
-                suffix="小时"
+                value={todayWatch}
+                suffix="分钟"
                 prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
               />
             </Card>
@@ -195,7 +196,7 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
               value={totalCost}
               precision={2}
               prefix={<DownOutlined style={{ color: "#f53f3f" }} />}
-              suffix="USD"
+              suffix="￥"
             />
           </Card>
         </Col>
@@ -203,7 +204,7 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
           <Card>
             <Statistic
               title="平均画质"
-              value="1440P"
+              value={avgQuality}
               prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
             />
           </Card>
@@ -212,8 +213,8 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
           <Card>
             <Statistic
               title="今日观看"
-              value="3.2"
-              suffix="小时"
+              value={todayWatch}
+              suffix="分钟"
               prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
             />
           </Card>

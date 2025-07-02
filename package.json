@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "setup-db": "docker-compose up -d && sleep 10 && npm run generate-test-data"
+    "lint": "next lint"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",

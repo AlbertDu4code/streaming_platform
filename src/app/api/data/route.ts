@@ -60,7 +60,20 @@ export async function GET(request: NextRequest) {
       return createValidationErrorResponse({ type: validationError });
     }
 
-    const validTypes = ["bandwidth", "streaming", "filters", "projects"];
+    const validTypes = [
+      "bandwidth",
+      "streaming",
+      "filters",
+      "projects",
+      "storage",
+      "live",
+      "duration",
+      "screenshot",
+      "push",
+      "transcode",
+      "direct",
+      "guide",
+    ];
     if (!validTypes.includes(type!)) {
       return createValidationErrorResponse({
         type: `不支持的type参数: ${type}。支持的类型: ${validTypes.join(", ")}`,
@@ -126,6 +139,102 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      case "live": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryLiveStreamData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryLiveStreamData(startTime, endTime, limit);
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("直播流数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "duration": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryTranscodeDurationData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryTranscodeDurationData(
+            startTime,
+            endTime,
+            limit
+          );
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("转码时长数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "screenshot": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryScreenshotData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryScreenshotData(startTime, endTime, limit);
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("截图数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "push": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryPushStreamData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryPushStreamData(startTime, endTime, limit);
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("拉流转推数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "transcode": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryTranscodeBandwidthData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryTranscodeBandwidthData(
+            startTime,
+            endTime,
+            limit
+          );
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("转推带宽数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "direct": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryDirectBandwidthData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryDirectBandwidthData(
+            startTime,
+            endTime,
+            limit
+          );
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("直播带宽数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
+      case "guide": {
+        const limit = parseInt(searchParams.get("limit") || "100");
+        const { queryGuideData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryGuideData(startTime, endTime, limit);
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("云导播数据查询失败:", error);
+          return createSuccessResponse([]);
+        }
+      }
+
       case "filters": {
         const filterType = searchParams.get("filterType");
         if (!filterType) {
@@ -166,6 +275,18 @@ export async function GET(request: NextRequest) {
           "全部项目"
         );
         return createSuccessResponse(result);
+      }
+
+      case "storage": {
+        const limit = parseInt(searchParams.get("limit") || "500");
+        const { queryStorageData } = await import("@/lib/influxdb");
+        try {
+          const data = await queryStorageData(limit);
+          return createSuccessResponse(data);
+        } catch (error) {
+          console.error("存储用量查询失败:", error);
+          return createSuccessResponse([]);
+        }
       }
 
       default:

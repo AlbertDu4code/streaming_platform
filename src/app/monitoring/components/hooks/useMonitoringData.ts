@@ -41,6 +41,14 @@ export const useMonitoringData = () => {
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [streamingData, setStreamingData] = useState<any[]>([]);
+  const [storageData, setStorageData] = useState<any[]>([]);
+  const [liveData, setLiveData] = useState<any[]>([]);
+  const [durationData, setDurationData] = useState<any[]>([]);
+  const [screenshotData, setScreenshotData] = useState<any[]>([]);
+  const [pushData, setPushData] = useState<any[]>([]);
+  const [transcodeData, setTranscodeData] = useState<any[]>([]);
+  const [directData, setDirectData] = useState<any[]>([]);
+  const [guideData, setGuideData] = useState<any[]>([]);
   const [options, setOptions] = useState({
     projectOptions: [] as OptionType[],
     tagOptions: [] as OptionType[],
@@ -143,18 +151,197 @@ export const useMonitoringData = () => {
     setStreamingData(data);
   }, []);
 
+  // 加载存储用量数据
+  const loadStorageData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=storage");
+      if (response.ok) {
+        const result = await response.json();
+        setStorageData(result.success ? result.data : []);
+      } else {
+        setStorageData([]);
+      }
+    } catch (error) {
+      setStorageData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载直播流数据
+  const loadLiveData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=live");
+      if (response.ok) {
+        const result = await response.json();
+        setLiveData(result.success ? result.data : []);
+      } else {
+        setLiveData([]);
+      }
+    } catch (error) {
+      setLiveData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载转码时长数据
+  const loadDurationData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=duration");
+      if (response.ok) {
+        const result = await response.json();
+        setDurationData(result.success ? result.data : []);
+      } else {
+        setDurationData([]);
+      }
+    } catch (error) {
+      setDurationData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载截图数据
+  const loadScreenshotData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=screenshot");
+      if (response.ok) {
+        const result = await response.json();
+        setScreenshotData(result.success ? result.data : []);
+      } else {
+        setScreenshotData([]);
+      }
+    } catch (error) {
+      setScreenshotData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载拉流转推数据
+  const loadPushData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=push");
+      if (response.ok) {
+        const result = await response.json();
+        setPushData(result.success ? result.data : []);
+      } else {
+        setPushData([]);
+      }
+    } catch (error) {
+      setPushData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载转推带宽数据
+  const loadTranscodeData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=transcode");
+      if (response.ok) {
+        const result = await response.json();
+        setTranscodeData(result.success ? result.data : []);
+      } else {
+        setTranscodeData([]);
+      }
+    } catch (error) {
+      setTranscodeData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载直播带宽数据
+  const loadDirectData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=direct");
+      if (response.ok) {
+        const result = await response.json();
+        setDirectData(result.success ? result.data : []);
+      } else {
+        setDirectData([]);
+      }
+    } catch (error) {
+      setDirectData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 加载云导播数据
+  const loadGuideData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/data?type=guide");
+      if (response.ok) {
+        const result = await response.json();
+        setGuideData(result.success ? result.data : []);
+      } else {
+        setGuideData([]);
+      }
+    } catch (error) {
+      setGuideData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // 初始化数据
   useEffect(() => {
     loadOptions();
     loadStreamingData();
-  }, [loadOptions, loadStreamingData]);
+    loadStorageData();
+    loadLiveData();
+    loadDurationData();
+    loadScreenshotData();
+    loadPushData();
+    loadTranscodeData();
+    loadDirectData();
+    loadGuideData();
+  }, [
+    loadOptions,
+    loadStreamingData,
+    loadStorageData,
+    loadLiveData,
+    loadDurationData,
+    loadScreenshotData,
+    loadPushData,
+    loadTranscodeData,
+    loadDirectData,
+    loadGuideData,
+  ]);
 
   return {
     loading,
     chartData,
     streamingData,
+    storageData,
+    liveData,
+    durationData,
+    screenshotData,
+    pushData,
+    transcodeData,
+    directData,
+    guideData,
     options,
     loadBandwidthData,
     loadStreamingData,
+    loadStorageData,
+    loadLiveData,
+    loadDurationData,
+    loadScreenshotData,
+    loadPushData,
+    loadTranscodeData,
+    loadDirectData,
+    loadGuideData,
   };
 };

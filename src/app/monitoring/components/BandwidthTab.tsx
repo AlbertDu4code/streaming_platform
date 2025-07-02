@@ -28,15 +28,13 @@ export default function BandwidthTab({
   dateRange,
   onViewModeChange,
 }: BandwidthTabProps) {
-  // 计算统计数据
-  const currentUpload =
-    chartData.length > 0 && chartData[chartData.length - 1]?.upload
-      ? chartData[chartData.length - 1].upload
-      : 0;
-  const currentDownload =
-    chartData.length > 0 && chartData[chartData.length - 1]?.download
-      ? chartData[chartData.length - 1].download
-      : 0;
+  // 动态统计数据
+  const uploadPeak = Math.max(...chartData.map((d) => d.upload || 0), 0);
+  const downloadPeak = Math.max(...chartData.map((d) => d.download || 0), 0);
+  // ChartData 没有 duration 字段，totalDuration 设为 0 或后续补充
+  const totalDuration = 0;
+  // 活跃服务数（以 domain 计）
+  const activeServices = new Set(chartData.map((d) => d.domain)).size;
 
   const tabItems = [
     {
@@ -64,7 +62,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="上行带宽峰值"
-              value={formatBandwidth(currentUpload * 1000000)}
+              value={formatBandwidth(uploadPeak * 1000000)}
               prefix={<DatabaseOutlined style={{ color: "#165dff" }} />}
             />
           </Card>
@@ -73,7 +71,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="下行带宽峰值"
-              value={formatBandwidth(currentDownload * 1000000)}
+              value={formatBandwidth(downloadPeak * 1000000)}
               prefix={<DownloadOutlined style={{ color: "#00b42a" }} />}
             />
           </Card>
@@ -82,7 +80,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="总观看时长"
-              value={120}
+              value={totalDuration}
               suffix="分钟"
               prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
             />
@@ -92,7 +90,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="活跃服务"
-              value={3}
+              value={activeServices}
               suffix="个"
               prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
             />

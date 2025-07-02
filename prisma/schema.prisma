@@ -29,6 +29,7 @@ model User {
   streamingAccounts StreamingAccount[]
   usageRecords  UsageRecord[]
   notifications Notification[]
+  liveStreams LiveStream[]
 
   @@map("users")
 }
@@ -88,7 +89,7 @@ model UserPreferences {
   monthlyReports       Boolean @default(true)
 
   // 显示设置
-  defaultCurrency      String  @default("USD")
+  defaultCurrency      String  @default("CNY")
   timeZone            String  @default("UTC")
   dateFormat          String  @default("YYYY-MM-DD")
 
@@ -128,7 +129,7 @@ model StreamingAccount {
   
   // 订阅信息
   monthlyFee  Decimal?         @db.Decimal(10, 2)
-  currency    String           @default("USD")
+  currency    String           @default("CNY")
   billingDate Int?             // 每月账单日期 (1-31)
   
   // API 集成信息
@@ -181,7 +182,7 @@ model Budget {
   
   name        String
   amount      Decimal  @db.Decimal(10, 2)
-  currency    String   @default("USD")
+  currency    String   @default("CNY")
   period      String   // MONTHLY, YEARLY
   
   // 预算范围
@@ -222,4 +223,23 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+model LiveStream {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  streamName String
+  streamType String   // push/pull
+  domain     String
+  region     String
+  resolution String
+  bitrate    Int
+  frameRate  Int
+  status     String   // active/inactive/error
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, streamName])
+  @@map("live_streams")
 }

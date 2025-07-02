@@ -21,8 +21,21 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   const [viewMode, setViewMode] = useState("line");
 
   const { filters, updateFilter, setTimeRange } = useFilterState();
-  const { loading, chartData, streamingData, options, loadBandwidthData } =
-    useMonitoringData();
+  const {
+    loading,
+    chartData,
+    streamingData,
+    storageData,
+    liveData,
+    durationData,
+    screenshotData,
+    pushData,
+    transcodeData,
+    directData,
+    guideData,
+    options,
+    loadBandwidthData,
+  } = useMonitoringData();
 
   // 处理筛选条件变化
   const handleFilterChange = async (key: keyof typeof filters, value: any) => {
@@ -147,6 +160,14 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
             activeTab={activeTab}
             chartData={chartData}
             streamingData={streamingData}
+            storageData={storageData}
+            liveData={liveData}
+            durationData={durationData}
+            screenshotData={screenshotData}
+            pushData={pushData}
+            transcodeData={transcodeData}
+            directData={directData}
+            guideData={guideData}
             loading={loading}
             viewMode={viewMode}
             dateRange={filters.dateRange}
