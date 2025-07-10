@@ -16,6 +16,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# 在构建时设置临时的DATABASE_URL以避免Prisma错误
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL:-"mysql://user:password@localhost:3306/database"}
+
 # 生成Prisma客户端
 RUN npx prisma generate
 
