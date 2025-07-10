@@ -13,9 +13,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ["@influxdata/influxdb-client"],
-  },
   eslint: {
     ignoreDuringBuilds: true,
   },
