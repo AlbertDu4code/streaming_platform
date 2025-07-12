@@ -1,9 +1,19 @@
 // src/lib/db/redis.ts
 import Redis from "ioredis";
 
-const redis = new Redis(process.env.REDIS_URL!);
+// 自动为 Railway 私有 Redis 加 family=0，兼容本地和云端
+function getRedisUrlWithFamily(url?: string) {
+  if (!url) return undefined;
+  // 已经有 family 参数
+  if (url.includes("family=")) return url;
+  // 有其它查询参数
+  if (url.includes("?")) return url + "&family=0";
+  // 没有查询参数
+  return url + "?family=0";
+}
 
-export { redis };
+const redisUrl = getRedisUrlWithFamily(process.env.REDIS_URL);
+export const redis = new Redis(redisUrl!);
 
 // 缓存使用数据
 export async function cacheUsageData(
