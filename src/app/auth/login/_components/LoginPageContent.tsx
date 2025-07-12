@@ -130,15 +130,8 @@ export default function LoginPageContent() {
           console.log("登录成功！");
         }
 
-        // 重新获取 session 并跳转
-        const session = await getSession();
-        console.log("获取到的session:", session);
-
-        if (session) {
-          router.push(callbackUrl);
-        } else {
-          setErrorMessage("登录状态异常，请重试");
-        }
+        // 登录成功后直接跳转，不再需要重新获取 session
+        router.push(callbackUrl);
       } else {
         setErrorMessage("登录失败，请重试");
       }
@@ -257,4 +250,4 @@ export default function LoginPageContent() {
       </div>
     </div>
   );
-} 
+}
