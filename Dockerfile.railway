@@ -49,11 +49,11 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@tailwindcss ./node_modules/@tailwindcss
 COPY --from=builder /app/node_modules/tailwindcss ./node_modules/tailwindcss
 
-# 复制启动脚本
-COPY --from=builder /app/scripts ./scripts
+# 复制启动脚本到根目录
+COPY --from=builder /app/start.sh ./start.sh
 
 # 设置启动脚本权限
-RUN chmod +x /app/scripts/start.sh
+RUN chmod +x /app/start.sh
 
 # 更改文件所有者
 RUN chown -R nextjs:nodejs /app
@@ -65,5 +65,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-# 使用启动脚本
-CMD ["/app/scripts/start.sh"] 
+# 使用根目录的启动脚本
+CMD ["/app/start.sh"] 
