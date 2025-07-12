@@ -64,4 +64,4 @@ fi
 
 # 启动应用
 echo "🌟 启动Next.js应用..."
-exec node server.js 
+exec node .next/standalone/server.js
