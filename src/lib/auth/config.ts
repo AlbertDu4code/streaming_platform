@@ -108,7 +108,7 @@ export const authConfig: NextAuthOptions = {
         sameSite: "none", // 关键，跨域/云端必须
         path: "/",
         secure: true,
-        domain: ".railway.app", // 你的生产域名或 .railway.app
+        // domain: ".railway.app", // 移除 domain，让 cookie 作用于当前域名，以覆盖默认的 Lax cookie
       },
     },
   },
