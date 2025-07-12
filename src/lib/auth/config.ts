@@ -3,6 +3,20 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma as db } from "@/lib/db/prisma";
+import type { Session } from "next-auth";
+
+// 类型扩展：让 session.user 支持 id 字段
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+    accessToken?: string;
+  }
+}
 
 // 定义登录表单的验证 schema
 const LoginSchema = z.object({
@@ -84,6 +98,19 @@ export const authConfig: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24小时
+  },
+  // 强制设置 cookie 属性，保证 Railway/生产环境下 session 不丢失
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "none", // 关键，跨域/云端必须
+        path: "/",
+        secure: true,
+        domain: ".railway.app", // 你的生产域名或 .railway.app
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user, account }) {
