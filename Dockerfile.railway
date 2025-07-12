@@ -65,4 +65,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
+# 使用启动脚本
 CMD ["/app/scripts/start.sh"] 
