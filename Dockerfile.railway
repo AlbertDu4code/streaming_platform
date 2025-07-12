@@ -49,6 +49,15 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@tailwindcss ./node_modules/@tailwindcss
 COPY --from=builder /app/node_modules/tailwindcss ./node_modules/tailwindcss
 
+# 复制启动脚本
+COPY --from=builder /app/scripts ./scripts
+
+# 设置启动脚本权限
+RUN chmod +x /app/scripts/start.sh
+
+# 更改文件所有者
+RUN chown -R nextjs:nodejs /app
+
 USER nextjs
 
 EXPOSE 3000
@@ -56,4 +65,4 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"] 
+CMD ["/app/scripts/start.sh"] 
