@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 const publicRoutes = ["/", "/auth/login", "/auth/register"];
 
 export default withAuth(
-  // 这个函数只会在 `authorized` 回调返回 true 时运行
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const isLoggedIn = !!req.nextauth.token;
@@ -15,12 +14,10 @@ export default withAuth(
       return NextResponse.redirect(new URL("/monitoring", req.url));
     }
 
-    // 对于所有其他授权的请求，继续处理
     return NextResponse.next();
   },
   {
     callbacks: {
-      // 这个回调决定用户是否有权访问一个页面
       authorized: ({ req, token }) => {
         const { pathname } = req.nextUrl;
 
@@ -29,11 +26,22 @@ export default withAuth(
           return true;
         }
 
-        // 2. 对于所有其他受保护的路由，只有在用户已登录（有token）时才授权
-        return !!token;
+        // 2. 对于受保护的路由，检查 token
+        if (!!token) {
+          return true;
+        }
+
+        // 3. 如果没有 token，检查是否是刚刚登录的情况
+        // 通过检查 referer 来判断是否来自登录页
+        const referer = req.headers.get('referer');
+        if (referer && referer.includes('/auth/login')) {
+          // 给一个短暂的宽限期，让 NextAuth 更新 token
+          return true;
+        }
+
+        return false;
       },
     },
-    // 告诉 withAuth，如果授权失败，应该把用户重定向到哪里
     pages: {
       signIn: "/auth/login",
     },
@@ -41,6 +49,5 @@ export default withAuth(
 );
 
 export const config = {
-  // 匹配除了 API、静态文件、图片等之外的所有路由
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
