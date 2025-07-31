@@ -80,9 +80,18 @@ export function buildInfluxQuery(
   groupBy?: string,
   distinctColumn?: string
 ): string {
+  const formatTime = (time: string) => {
+    // 如果时间参数是ISO格式的字符串，则加上引号
+    if (time.includes("T")) {
+      return `"${time}"`;
+    }
+    // 否则，假定是相对时间，不加引号
+    return time;
+  };
+
   let query = `
     from(bucket: "${bucket}")
-      |> range(start: ${startTime}, stop: ${endTime})
+      |> range(start: ${formatTime(startTime)}, stop: ${formatTime(endTime)})
       |> filter(fn: (r) => r._measurement == "${measurement}")
   `;
 
