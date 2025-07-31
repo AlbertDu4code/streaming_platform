@@ -157,7 +157,7 @@ export async function queryBandwidthData({
   const countQuery = `${baseQuery}
       |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-      |> count(column: "_time")`;
+      |> count()`;
 
   let total = 0;
   try {
