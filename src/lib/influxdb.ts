@@ -153,10 +153,10 @@ export async function queryBandwidthData({
     dataQuery += `\n      |> map(fn: (r) => ({ r with total: r.upload + r.download }))`;
   }
 
-  // 查询总数 - 使用简化的计数查询
+  // 查询总数 - 避免在计数时使用 pivot
   const countQuery = `${baseQuery}
       |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)
-      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> distinct(column: "_time")
       |> count()`;
 
   let total = 0;
