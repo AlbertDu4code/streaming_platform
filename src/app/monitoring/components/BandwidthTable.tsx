@@ -195,11 +195,11 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
     console.log("请求 URL:", url);
 
     try {
-      const result: ApiResponse = await fetcher(url);
+      const result = await fetcher<{ data: ApiResponse }>(url);
       return {
-        data: result.data || [],
+        data: result.data.data || [],
         success: true,
-        total: result.total || 0,
+        total: result.data.total || 0,
       };
     } catch (error) {
       console.error("API 请求失败:", error);
