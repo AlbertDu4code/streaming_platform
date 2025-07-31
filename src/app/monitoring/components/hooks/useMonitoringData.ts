@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { message } from "antd";
-import { ChartData, OptionType, FilterState, ApiResponse } from "../types";
-import { fetcher } from "@/lib/api-utils";
+import { ChartData, OptionType, FilterState } from "../types";
+import { fetcher, ApiResponse } from "@/lib/api-utils";
 import { HttpError } from "@/lib/errors";
 
 export const useMonitoringData = () => {

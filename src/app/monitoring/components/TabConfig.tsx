@@ -10,7 +10,7 @@ import PushTab from "./PushTab";
 import TranscodeBandwidthTab from "./TranscodeBandwidthTab";
 import DirectBandwidthTab from "./DirectBandwidthTab";
 import GuideTab from "./GuideTab";
-import { ChartData } from "./types";
+import { ChartData, FilterState } from "./types"; // 导入 FilterState
 
 interface TabDataProps {
   chartData: ChartData[];
@@ -26,6 +26,7 @@ interface TabDataProps {
   loading: boolean;
   viewMode: string;
   dateRange: string[] | null;
+  filters: FilterState; // 添加 filters 属性
   onViewModeChange: (mode: string) => void;
 }
 
@@ -46,15 +47,18 @@ export const TAB_CONFIGS: TabConfig[] = [
       loading,
       viewMode,
       dateRange,
+      filters, // 接收 filters
       onViewModeChange,
     }) => ({
       chartData,
       loading,
       viewMode,
       dateRange,
+      filters, // 传递 filters
       onViewModeChange,
     }),
   },
+  // ... 其他 tab 配置保持不变
   {
     key: "streaming",
     label: "流量用量",
@@ -144,7 +148,6 @@ export const getTabComponent = (activeTab: string, tabData: TabDataProps) => {
   const config = TAB_CONFIGS.find((tab) => tab.key === activeTab);
 
   if (!config) {
-    // 默认情况：显示开发中的提示
     const { Card, Empty } = require("antd");
     return (
       <Card

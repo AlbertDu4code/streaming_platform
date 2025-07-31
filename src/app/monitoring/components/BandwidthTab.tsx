@@ -11,13 +11,14 @@ import { useMemo } from "react";
 import BandwidthChart from "./BandwidthChart";
 import BandwidthTable from "./BandwidthTable";
 import { formatBandwidth, formatDuration, formatCount } from "@/lib/utils";
-import { ChartData } from "./types";
+import { ChartData, FilterState } from "./types";
 
 interface BandwidthTabProps {
   chartData: ChartData[];
   loading: boolean;
   viewMode: string;
   dateRange: string[] | null;
+  filters: FilterState; // 接收筛选条件
   onViewModeChange: (mode: string) => void;
 }
 
@@ -26,10 +27,12 @@ export default function BandwidthTab({
   loading,
   viewMode,
   dateRange,
+  filters,
   onViewModeChange,
 }: BandwidthTabProps) {
-  // 使用useMemo缓存统计数据计算
+  // 统计数据部分保持不变
   const statistics = useMemo(() => {
+    // ... (统计逻辑不变)
     if (!chartData || chartData.length === 0) {
       return {
         uploadPeak: 0,
@@ -47,7 +50,6 @@ export default function BandwidthTab({
     const downloadPeak = Math.max(...downloadValues, 0);
     const totalBandwidth = uploadPeak + downloadPeak;
 
-    // 计算活跃服务数（去重domain）
     const uniqueDomains = new Set(
       chartData
         .map((d) => d.domain)
@@ -55,9 +57,7 @@ export default function BandwidthTab({
     );
     const activeServices = uniqueDomains.size;
 
-    // 模拟总观看时长（实际项目中应该从数据中获取）
     const totalDuration = chartData.reduce((acc, curr) => {
-      // 假设每个数据点代表5分钟的时长
       return acc + (curr.upload > 0 || curr.download > 0 ? 5 * 60 : 0);
     }, 0);
 
@@ -72,30 +72,27 @@ export default function BandwidthTab({
 
   const tabItems = useMemo(
     () => [
-      {
-        key: "line",
-        label: "折线图",
-        children: (
-          <BandwidthChart data={chartData} loading={loading} type="line" />
-        ),
-      },
-      {
-        key: "bar",
-        label: "柱状图",
-        children: (
-          <BandwidthChart data={chartData} loading={loading} type="bar" />
-        ),
-      },
-      {
-        key: "table",
-        label: "数据表格",
-        children: <BandwidthTable data={chartData} loading={loading} />,
-      },
+      { key: "line", label: "折线图" },
+      { key: "bar", label: "柱状图" },
+      { key: "table", label: "数据表格" },
     ],
-    [chartData, loading]
+    []
   );
 
-  // 渲染统计卡片
+  const renderContent = () => {
+    if (viewMode === "table") {
+      // 传递筛选条件给 BandwidthTable
+      return <BandwidthTable filters={filters} />;
+    }
+    return (
+      <BandwidthChart
+        data={chartData}
+        loading={loading}
+        type={viewMode as "line" | "bar"}
+      />
+    );
+  };
+
   const renderStatisticCard = (
     title: string,
     value: string | number,
@@ -113,22 +110,9 @@ export default function BandwidthTab({
     </Card>
   );
 
-  if (!chartData || chartData.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="text-gray-500 mb-2 text-lg">暂无带宽数据</div>
-          <div className="text-gray-400 text-sm">
-            请先从上方筛选条件中选择项目和时间范围
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* 当前带宽统计 */}
+      {/* 统计卡片... */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           {renderStatisticCard(
@@ -161,7 +145,6 @@ export default function BandwidthTab({
         </Col>
       </Row>
 
-      {/* 图表展示 */}
       <Card
         title={
           <div className="flex items-center justify-between">
@@ -182,8 +165,9 @@ export default function BandwidthTab({
           items={tabItems}
           size="middle"
           type="card"
-          animated={false} // 简单禁用所有动画
+          animated={false}
         />
+        <div style={{ marginTop: 16 }}>{renderContent()}</div>
       </Card>
     </div>
   );

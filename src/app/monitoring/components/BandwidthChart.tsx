@@ -62,8 +62,7 @@ export default function BandwidthChart({
       option={option}
       style={{ width: "100%", height }}
       showLoading={loading}
-      notMerge={true}
-      lazyUpdate={true}
+      notMerge={false} // ECharts官方推荐：允许增量更新，避免重新创建图表
     />
   );
 }

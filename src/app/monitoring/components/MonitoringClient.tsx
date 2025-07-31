@@ -175,6 +175,7 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
             loading,
             viewMode,
             dateRange: filters.dateRange,
+            filters, // 将筛选条件传递给 Tab 组件
             onViewModeChange: setViewMode,
           })}
         </div>
