@@ -81,14 +81,23 @@ export async function queryBandwidthData({
     }
   });
 
+  let dataQuery = baseQuery;
+
   // 聚合和转换
-  baseQuery += `
-    |> aggregateWindow(every: ${granularity}, fn: mean, createEmpty: false)
-    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-  `;
+  if (granularity !== "raw") {
+    // 'raw' 表示不聚合
+    dataQuery += `|> aggregateWindow(every: ${granularity}, fn: mean, createEmpty: false)`;
+  }
+
+  dataQuery += `|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`;
+
+  // 处理总带宽排序
+  if (sort.field === "total") {
+    dataQuery += `|> map(fn: (r) => ({ r with total: r.upload + r.download }))`;
+  }
 
   // 查询总数
-  const countQuery = `${baseQuery} |> count(column: "_time")`;
+  const countQuery = `${dataQuery} |> group() |> count(column: "_time")`;
   let total = 0;
   try {
     const countResult = await queryApi.collectRows<{ _value: number }>(
@@ -99,29 +108,33 @@ export async function queryBandwidthData({
     }
   } catch (error) {
     console.error("InfluxDB (count)查询错误:", error);
-    // 即使计数失败，也继续尝试获取数据
   }
 
-  // 添加排序和分页
+  // 映射排序字段
+  const sortField = sort.field === "time" ? "_time" : sort.field;
   const desc = sort.order === "descend";
-  baseQuery += `
-    |> sort(columns: ["${sort.field}"], desc: ${desc})
+
+  // 添加排序和分页
+  dataQuery += `
+    |> sort(columns: ["${sortField}"], desc: ${desc})
     |> limit(n: ${pageSize}, offset: ${(page - 1) * pageSize})
   `;
 
   const results: BandwidthData[] = [];
 
   try {
-    for await (const { values, tableMeta } of queryApi.iterateRows(baseQuery)) {
+    for await (const { values, tableMeta } of queryApi.iterateRows(dataQuery)) {
       const o = tableMeta.toObject(values);
       results.push({
         time: o._time,
         upload: o.upload || 0,
         download: o.download || 0,
-        project: o.project ? o.project.replace(/^"|"$/g, "") : undefined,
-        domain: o.domain ? o.domain.replace(/^"|"$/g, "") : undefined,
-        region: o.region ? o.region.replace(/^"|"$/g, "") : undefined,
-        tag: o.tag ? o.tag.replace(/^"|"$/g, "") : undefined,
+        project: o.project
+          ? String(o.project).replace(/^"|"$/g, "")
+          : undefined,
+        domain: o.domain ? String(o.domain).replace(/^"|"$/g, "") : undefined,
+        region: o.region ? String(o.region).replace(/^"|"$/g, "") : undefined,
+        tag: o.tag ? String(o.tag).replace(/^"|"$/g, "") : undefined,
       });
     }
   } catch (error) {
@@ -132,5 +145,4 @@ export async function queryBandwidthData({
   return { data: results, total };
 }
 
-// 其他函数的代码... (保持不变)
-// ...
+// ... (其他函数保持不变) ...

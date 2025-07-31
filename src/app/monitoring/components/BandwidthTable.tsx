@@ -9,17 +9,15 @@ import { fetcher } from "@/lib/api-utils";
 import type { ProColumns } from "@ant-design/pro-components";
 
 interface BandwidthTableProps {
-  filters?: Record<string, any>; // 接收来自 FilterPanel 的筛选条件
+  filters?: Record<string, any>;
 }
 
-// 定义 API 返回的数据结构
 interface ApiResponse {
   data: ChartData[];
   total: number;
 }
 
 export default function BandwidthTable({ filters }: BandwidthTableProps) {
-  // 安全的带宽格式化函数
   const safeBandwidthFormat = (value: number | undefined): string => {
     if (typeof value !== "number" || isNaN(value)) {
       return "0.000 Mbps";
@@ -82,7 +80,6 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
           </Tag>
         </Tooltip>
       ),
-      // ProTable 会自动处理筛选
     },
     {
       title: "域名",
@@ -141,6 +138,7 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
       title: "总带宽",
       key: "total",
       width: 150,
+      search: false,
       render: (_, record) => {
         const total = (record.upload || 0) + (record.download || 0);
         return (
@@ -161,11 +159,10 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
         const queryParams = new URLSearchParams({
           current: params.current?.toString() || "1",
           pageSize: params.pageSize?.toString() || "20",
-          ...filters, // 来自外部的筛选条件
-          ...filter, // 来自 ProTable 内部的筛选
+          ...filters,
+          ...filter,
         });
 
-        // 处理排序
         Object.keys(sort).forEach((key) => {
           queryParams.append("sortField", key);
           queryParams.append("sortOrder", sort[key] as string);
@@ -188,9 +185,10 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
         pageSizeOptions: ["10", "20", "50", "100"],
       }}
       scroll={{ x: 1300, y: 600 }}
-      search={false} // 禁用 ProTable 自带的查询表单
+      search={false}
       headerTitle="带宽数据详情"
-      toolBarRender={false} // 禁用工具栏
+      toolBarRender={false}
+      params={filters} // 将外部筛选条件作为 ProTable 的查询参数
     />
   );
 }

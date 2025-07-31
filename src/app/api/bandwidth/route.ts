@@ -16,17 +16,27 @@ export async function GET(request: NextRequest) {
     const domain = searchParams.get("domain") || undefined;
     const region = searchParams.get("region") || undefined;
     const tag = searchParams.get("tag") || undefined;
+    const granularity = searchParams.get("granularity") || "5min";
 
     // 排序参数
     const sortField = searchParams.get("sortField") || "time";
     const sortOrder = searchParams.get("sortOrder") || "descend";
 
     // 时间范围参数
-    let startTime = searchParams.get("startTime");
-    let endTime = searchParams.get("endTime");
+    const dateRangeParam = searchParams.get("dateRange");
+    let startTime: string | null = null;
+    let endTime: string | null = null;
 
+    if (dateRangeParam) {
+      const dates = dateRangeParam.split(",");
+      if (dates.length === 2) {
+        startTime = dates[0];
+        endTime = dates[1];
+      }
+    }
+
+    // 如果没有有效的 dateRange，则使用默认值
     if (!startTime || !endTime) {
-      // 默认查询最近24小时
       endTime = dayjs().toISOString();
       startTime = dayjs().subtract(1, "day").toISOString();
     }
@@ -38,6 +48,7 @@ export async function GET(request: NextRequest) {
       pageSize,
       filters: { project, domain, region, tag },
       sort: { field: sortField, order: sortOrder },
+      granularity,
     });
 
     return createSuccessResponse({
