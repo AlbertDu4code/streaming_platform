@@ -113,7 +113,6 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
         <div style={{ maxWidth: "100%", margin: "0 auto" }}>
           <Card
             style={{
-              marginBottom: 24,
               background: "#fff",
               borderRadius: 8,
               boxShadow: "0 1px 4px rgba(0,21,41,.08)",
@@ -125,59 +124,65 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
               onChange={setActiveTab}
               type="card"
               items={tabItems}
-              style={{ background: "#fff", borderRadius: 8, marginBottom: 16 }}
+              style={{ marginBottom: 16 }}
             />
+
+            <FilterPanel
+              project={filters.project}
+              tag={filters.tag}
+              domain={filters.domain}
+              region={filters.region}
+              protocol={filters.protocol}
+              dateRange={filters.dateRange}
+              granularity={filters.granularity}
+              timeRange={filters.timeRange}
+              onProjectChange={(value) =>
+                handleFilterChange({ project: value })
+              }
+              onTagChange={(value) => handleFilterChange({ tag: value })}
+              onDomainChange={(value) => handleFilterChange({ domain: value })}
+              onRegionChange={(value) => handleFilterChange({ region: value })}
+              onProtocolChange={(value) =>
+                handleFilterChange({ protocol: value })
+              }
+              onDateRangeChange={(dateStrings) =>
+                handleFilterChange({
+                  dateRange:
+                    dateStrings && dateStrings.length === 2
+                      ? dateStrings
+                      : null,
+                })
+              }
+              onGranularityChange={(value) =>
+                handleFilterChange({ granularity: value })
+              }
+              onTimeRangeChange={handleTimeRangeChange}
+              projectOptions={options.projectOptions}
+              tagOptions={options.tagOptions}
+              domainOptions={options.domainOptions}
+              regionOptions={options.regionOptions}
+            />
+
+            <div style={{ marginTop: 24 }}>
+              {getTabComponent(activeTab, {
+                chartData,
+                streamingData,
+                storageData,
+                liveData,
+                durationData,
+                screenshotData,
+                pushData,
+                transcodeData,
+                directData,
+                guideData,
+                loading,
+                viewMode,
+                dateRange: filters.dateRange,
+                filters, // 将筛选条件传递给 Tab 组件
+                onViewModeChange: setViewMode,
+              })}
+            </div>
           </Card>
-
-          <FilterPanel
-            project={filters.project}
-            tag={filters.tag}
-            domain={filters.domain}
-            region={filters.region}
-            protocol={filters.protocol}
-            dateRange={filters.dateRange}
-            granularity={filters.granularity}
-            timeRange={filters.timeRange}
-            onProjectChange={(value) => handleFilterChange({ project: value })}
-            onTagChange={(value) => handleFilterChange({ tag: value })}
-            onDomainChange={(value) => handleFilterChange({ domain: value })}
-            onRegionChange={(value) => handleFilterChange({ region: value })}
-            onProtocolChange={(value) =>
-              handleFilterChange({ protocol: value })
-            }
-            onDateRangeChange={(dateStrings) =>
-              handleFilterChange({
-                dateRange:
-                  dateStrings && dateStrings.length === 2 ? dateStrings : null,
-              })
-            }
-            onGranularityChange={(value) =>
-              handleFilterChange({ granularity: value })
-            }
-            onTimeRangeChange={handleTimeRangeChange}
-            projectOptions={options.projectOptions}
-            tagOptions={options.tagOptions}
-            domainOptions={options.domainOptions}
-            regionOptions={options.regionOptions}
-          />
-
-          {getTabComponent(activeTab, {
-            chartData,
-            streamingData,
-            storageData,
-            liveData,
-            durationData,
-            screenshotData,
-            pushData,
-            transcodeData,
-            directData,
-            guideData,
-            loading,
-            viewMode,
-            dateRange: filters.dateRange,
-            filters, // 将筛选条件传递给 Tab 组件
-            onViewModeChange: setViewMode,
-          })}
         </div>
       </Content>
     </Layout>
