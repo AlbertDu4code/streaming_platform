@@ -90,7 +90,7 @@ interface QueryBandwidthDataParams {
   granularity?: string;
 }
 
-// 查询带宽数据
+// 查询带宽数据 (最终重构版)
 export async function queryBandwidthData({
   startTime,
   endTime,
@@ -103,27 +103,6 @@ export async function queryBandwidthData({
   data: BandwidthData[];
   total: number;
 }> {
-  // 基础查询
-  let baseQuery = `
-    from(bucket: "${INFLUX_BUCKET}")
-      |> ${formatTimeRange(startTime, endTime)}
-      |> filter(fn: (r) => r._measurement == "bandwidth_usage")
-  `;
-
-  // 安全地添加筛选条件
-  Object.entries(filters).forEach(([key, value]) => {
-    if (
-      value &&
-      value !== "all" &&
-      value !== "undefined" &&
-      typeof value === "string"
-    ) {
-      // 转义特殊字符并确保值被正确引用
-      const escapedValue = value.replace(/"/g, '\\"');
-      baseQuery += `\n      |> filter(fn: (r) => r.${key} == "${escapedValue}")`;
-    }
-  });
-
   let window = "5m";
   if (granularity !== "raw") {
     switch (granularity) {
@@ -138,59 +117,40 @@ export async function queryBandwidthData({
     }
   }
 
-  let dataQuery = baseQuery;
-
-  // 聚合和转换
-  if (granularity !== "raw") {
-    // 'raw' 表示不聚合
-    dataQuery += `\n      |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)`;
-  }
-
-  dataQuery += `\n      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`;
-
-  // 处理总带宽排序
-  if (sort.field === "total") {
-    dataQuery += `\n      |> map(fn: (r) => ({ r with total: r.upload + r.download }))`;
-  }
-
-  // 查询总数 - 避免在计数时使用 pivot
-  const countQuery = `${baseQuery}
-      |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)
-      |> distinct(column: "_time")
-      |> count()`;
-
-  let total = 0;
-  try {
-    const countResult = await queryApi.collectRows<{ _value: number }>(
-      countQuery
-    );
-    if (countResult.length > 0) {
-      total = countResult[0]._value || 0;
-    }
-  } catch (error) {
-    console.error("InfluxDB (count)查询错误:", error);
-    // 如果计数查询失败，设置一个默认值，避免阻塞数据查询
-    total = 1000;
-  }
-
-  // 映射排序字段
-  const sortField = sort.field === "time" ? "_time" : sort.field;
-  const desc = sort.order === "descend";
-
-  // 添加排序和分页
-  dataQuery += `
-      |> sort(columns: ["${sortField}"], desc: ${desc})
-      |> limit(n: ${pageSize}, offset: ${(page - 1) * pageSize})
+  // 1. 构建一个只获取所有相关数据的查询 (无分页)
+  let query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "bandwidth_usage")
   `;
 
-  console.log("生成的查询语句:", dataQuery);
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && value !== "all") {
+      const escapedValue = String(value).replace(/"/g, '\\"');
+      query += `\n      |> filter(fn: (r) => r.${key} == "${escapedValue}")`;
+    }
+  });
 
-  const results: BandwidthData[] = [];
+  if (granularity !== "raw") {
+    query += `\n      |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)`;
+  }
 
+  query += `\n      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`;
+
+  if (sort.field === "total") {
+    query += `\n      |> map(fn: (r) => ({ r with total: r.upload + r.download }))`;
+  }
+
+  const sortField = sort.field === "time" ? "_time" : sort.field;
+  const desc = sort.order === "descend";
+  query += `\n      |> sort(columns: ["${sortField}"], desc: ${desc})`;
+
+  // 2. 执行查询，获取所有数据
+  const allResults: BandwidthData[] = [];
   try {
-    for await (const { values, tableMeta } of queryApi.iterateRows(dataQuery)) {
+    for await (const { values, tableMeta } of queryApi.iterateRows(query)) {
       const o = tableMeta.toObject(values);
-      results.push({
+      allResults.push({
         time: o._time,
         upload: o.upload || 0,
         download: o.download || 0,
@@ -203,11 +163,16 @@ export async function queryBandwidthData({
       });
     }
   } catch (error) {
-    console.error("InfluxDB (data)查询错误:", error);
+    console.error("InfluxDB 数据查询错误:", error);
     throw error;
   }
 
-  return { data: results, total };
+  // 3. 在内存中计算总数和进行分页
+  const total = allResults.length;
+  const offset = (page - 1) * pageSize;
+  const paginatedData = allResults.slice(offset, offset + pageSize);
+
+  return { data: paginatedData, total };
 }
 
 // 查询带宽数据（原版本，用于向后兼容）
