@@ -70,7 +70,7 @@ export async function queryBandwidthData({
   // 基础查询
   let baseQuery = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: ${startTime}, stop: ${endTime})
+      |> range(start: "${startTime}", stop: "${endTime}")
       |> filter(fn: (r) => r._measurement == "bandwidth_usage")
   `;
 
