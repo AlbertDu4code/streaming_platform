@@ -134,20 +134,38 @@ export const useMonitoringData = () => {
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     errorMessage: string
   ) =>
-    useCallback(async () => {
-      setLoading(true);
-      try {
-        const result = await fetcher<ApiResponse<T[]>>(
-          `/api/data?type=${type}`
-        );
-        setter(result.data ?? []);
-      } catch (error) {
-        handleError(error, errorMessage);
-        setter([]);
-      } finally {
-        setLoading(false);
-      }
-    }, [setter, type, errorMessage]);
+    useCallback(
+      async (filters: FilterState) => {
+        if (!filters.project) {
+          setter([]);
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            type,
+            project: filters.project,
+          });
+
+          if (filters.dateRange && filters.dateRange.length === 2) {
+            params.append("startTime", filters.dateRange[0]);
+            params.append("endTime", filters.dateRange[1]);
+          }
+
+          const result = await fetcher<ApiResponse<T[]>>(
+            `/api/data?${params.toString()}`
+          );
+          setter(result.data ?? []);
+        } catch (error) {
+          handleError(error, errorMessage);
+          setter([]);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [setter, type, errorMessage]
+    );
 
   const loadStreamingData = createDataLoader(
     "streaming",
@@ -201,16 +219,18 @@ export const useMonitoringData = () => {
 
   return {
     loading,
-    chartData,
-    streamingData,
-    storageData,
-    liveData,
-    durationData,
-    screenshotData,
-    pushData,
-    transcodeData,
-    directData,
-    guideData,
+    data: {
+      chartData,
+      streamingData,
+      storageData,
+      liveData,
+      durationData,
+      screenshotData,
+      pushData,
+      transcodeData,
+      directData,
+      guideData,
+    },
     options,
     loadBandwidthData,
     loadStreamingData,

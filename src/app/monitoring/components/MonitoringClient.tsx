@@ -25,16 +25,7 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   const { filters, updateFilters, setTimeRange } = useFilterState();
   const {
     loading,
-    chartData,
-    streamingData,
-    storageData,
-    liveData,
-    durationData,
-    screenshotData,
-    pushData,
-    transcodeData,
-    directData,
-    guideData,
+    data,
     options,
     loadBandwidthData,
     loadOptions,
@@ -63,8 +54,29 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   useEffect(() => {
     if (filters.project) {
       loadBandwidthData(filters);
+      loadStreamingData(filters);
+      loadStorageData(filters);
+      loadLiveData(filters);
+      loadDurationData(filters);
+      loadScreenshotData(filters);
+      loadPushData(filters);
+      loadTranscodeData(filters);
+      loadDirectData(filters);
+      loadGuideData(filters);
     }
-  }, [filters, loadBandwidthData]);
+  }, [
+    filters,
+    loadBandwidthData,
+    loadStreamingData,
+    loadStorageData,
+    loadLiveData,
+    loadDurationData,
+    loadScreenshotData,
+    loadPushData,
+    loadTranscodeData,
+    loadDirectData,
+    loadGuideData,
+  ]);
 
   // 处理登出
   const handleLogout = async () => {
@@ -79,15 +91,15 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
       // 重新加载所有数据
       await Promise.all([
         loadOptions(),
-        loadStreamingData(),
-        loadStorageData(),
-        loadLiveData(),
-        loadDurationData(),
-        loadScreenshotData(),
-        loadPushData(),
-        loadTranscodeData(),
-        loadDirectData(),
-        loadGuideData(),
+        loadStreamingData(filters),
+        loadStorageData(filters),
+        loadLiveData(filters),
+        loadDurationData(filters),
+        loadScreenshotData(filters),
+        loadPushData(filters),
+        loadTranscodeData(filters),
+        loadDirectData(filters),
+        loadGuideData(filters),
         loadBandwidthData(filters),
       ]);
     } catch (error) {
@@ -165,20 +177,10 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
 
             <div style={{ marginTop: 24 }}>
               {getTabComponent(activeTab, {
-                chartData,
-                streamingData,
-                storageData,
-                liveData,
-                durationData,
-                screenshotData,
-                pushData,
-                transcodeData,
-                directData,
-                guideData,
+                data,
                 loading,
                 viewMode,
-                dateRange: filters.dateRange,
-                filters, // 将筛选条件传递给 Tab 组件
+                filters,
                 onViewModeChange: setViewMode,
               })}
             </div>

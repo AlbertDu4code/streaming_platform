@@ -12,7 +12,7 @@ import DirectBandwidthTab from "./DirectBandwidthTab";
 import GuideTab from "./GuideTab";
 import { ChartData, FilterState } from "./types"; // 导入 FilterState
 
-interface TabDataProps {
+interface TabData {
   chartData: ChartData[];
   streamingData: any[];
   storageData?: any[];
@@ -23,10 +23,13 @@ interface TabDataProps {
   transcodeData?: any[];
   directData?: any[];
   guideData?: any[];
+}
+
+interface TabComponentProps {
+  data: TabData;
   loading: boolean;
   viewMode: string;
-  dateRange: string[] | null;
-  filters: FilterState; // 添加 filters 属性
+  filters: FilterState;
   onViewModeChange: (mode: string) => void;
 }
 
@@ -34,7 +37,7 @@ interface TabConfig {
   key: string;
   label: string;
   component: React.ComponentType<any>;
-  propsMapping: (data: TabDataProps) => Record<string, any>;
+  propsMapping: (data: TabComponentProps) => Record<string, any>;
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
@@ -42,37 +45,28 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "bandwidth",
     label: "带宽用量",
     component: BandwidthTab,
-    propsMapping: ({
-      chartData,
+    propsMapping: ({ data, loading, viewMode, filters, onViewModeChange }) => ({
+      chartData: data.chartData,
       loading,
       viewMode,
-      dateRange,
-      filters, // 接收 filters
-      onViewModeChange,
-    }) => ({
-      chartData,
-      loading,
-      viewMode,
-      dateRange,
-      filters, // 传递 filters
+      filters,
       onViewModeChange,
     }),
   },
-  // ... 其他 tab 配置保持不变
   {
     key: "streaming",
     label: "流量用量",
     component: StreamingTab,
-    propsMapping: ({ streamingData }) => ({
-      streamingData,
+    propsMapping: ({ data }) => ({
+      streamingData: data.streamingData,
     }),
   },
   {
     key: "live",
     label: "推拉流监控",
     component: LiveTab,
-    propsMapping: ({ liveData, loading }) => ({
-      liveData: liveData || [],
+    propsMapping: ({ data, loading }) => ({
+      liveData: data.liveData || [],
       loading,
     }),
   },
@@ -80,8 +74,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "storage",
     label: "存储用量",
     component: StorageTab,
-    propsMapping: ({ storageData, loading }) => ({
-      storageData: storageData || [],
+    propsMapping: ({ data, loading }) => ({
+      storageData: data.storageData || [],
       loading,
     }),
   },
@@ -89,8 +83,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "duration",
     label: "转码时长",
     component: TranscodeTab,
-    propsMapping: ({ durationData, loading }) => ({
-      transcodeData: durationData || [],
+    propsMapping: ({ data, loading }) => ({
+      transcodeData: data.durationData || [],
       loading,
     }),
   },
@@ -98,8 +92,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "screenshot",
     label: "截图张数",
     component: ScreenshotTab,
-    propsMapping: ({ screenshotData, loading }) => ({
-      screenshotData: screenshotData || [],
+    propsMapping: ({ data, loading }) => ({
+      screenshotData: data.screenshotData || [],
       loading,
     }),
   },
@@ -107,8 +101,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "push",
     label: "拉流转推",
     component: PushTab,
-    propsMapping: ({ pushData, loading }) => ({
-      pushData: pushData || [],
+    propsMapping: ({ data, loading }) => ({
+      pushData: data.pushData || [],
       loading,
     }),
   },
@@ -116,8 +110,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "transcode",
     label: "转推带宽",
     component: TranscodeBandwidthTab,
-    propsMapping: ({ transcodeData, loading }) => ({
-      transcodeBandwidthData: transcodeData || [],
+    propsMapping: ({ data, loading }) => ({
+      transcodeBandwidthData: data.transcodeData || [],
       loading,
     }),
   },
@@ -125,8 +119,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "direct",
     label: "直播带宽",
     component: DirectBandwidthTab,
-    propsMapping: ({ directData, loading }) => ({
-      directBandwidthData: directData || [],
+    propsMapping: ({ data, loading }) => ({
+      directBandwidthData: data.directData || [],
       loading,
     }),
   },
@@ -134,8 +128,8 @@ export const TAB_CONFIGS: TabConfig[] = [
     key: "guide",
     label: "云导播",
     component: GuideTab,
-    propsMapping: ({ guideData, loading }) => ({
-      guideData: guideData || [],
+    propsMapping: ({ data, loading }) => ({
+      guideData: data.guideData || [],
       loading,
     }),
   },
@@ -144,7 +138,10 @@ export const TAB_CONFIGS: TabConfig[] = [
 export const getTabItems = () =>
   TAB_CONFIGS.map(({ key, label }) => ({ key, label }));
 
-export const getTabComponent = (activeTab: string, tabData: TabDataProps) => {
+export const getTabComponent = (
+  activeTab: string,
+  tabData: TabComponentProps
+) => {
   const config = TAB_CONFIGS.find((tab) => tab.key === activeTab);
 
   if (!config) {
