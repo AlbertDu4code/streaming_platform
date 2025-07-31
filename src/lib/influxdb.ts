@@ -124,12 +124,26 @@ export async function queryBandwidthData({
     }
   });
 
+  let window = "5m";
+  if (granularity !== "raw") {
+    switch (granularity) {
+      case "1hour":
+        window = "1h";
+        break;
+      case "1day":
+        window = "1d";
+        break;
+      default:
+        window = "5m";
+    }
+  }
+
   let dataQuery = baseQuery;
 
   // 聚合和转换
   if (granularity !== "raw") {
     // 'raw' 表示不聚合
-    dataQuery += `\n      |> aggregateWindow(every: ${granularity}, fn: mean, createEmpty: false)`;
+    dataQuery += `\n      |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)`;
   }
 
   dataQuery += `\n      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`;
@@ -141,7 +155,7 @@ export async function queryBandwidthData({
 
   // 查询总数 - 使用简化的计数查询
   const countQuery = `${baseQuery}
-      |> aggregateWindow(every: ${granularity}, fn: mean, createEmpty: false)
+      |> aggregateWindow(every: ${window}, fn: mean, createEmpty: false)
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> count(column: "_time")`;
 
