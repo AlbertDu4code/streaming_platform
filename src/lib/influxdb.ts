@@ -24,6 +24,13 @@ export const writeApi = influxDB.getWriteApi(INFLUX_ORG, INFLUX_BUCKET, "ms");
 // 获取查询API
 export const queryApi = influxDB.getQueryApi(INFLUX_ORG);
 
+// 统一的时间范围格式化函数
+function formatTimeRange(startTime: string, endTime: string): string {
+  const format = (time: string) =>
+    time.includes("T") ? `time(v: "${time}")` : time;
+  return `range(start: ${format(startTime)}, stop: ${format(endTime)})`;
+}
+
 // 带宽数据接口
 export interface BandwidthData {
   time: string;
@@ -99,7 +106,7 @@ export async function queryBandwidthData({
   // 基础查询
   let baseQuery = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: "${startTime}", stop: "${endTime}")
+      |> ${formatTimeRange(startTime, endTime)}
       |> filter(fn: (r) => r._measurement == "bandwidth_usage")
   `;
 
@@ -203,7 +210,7 @@ export async function queryBandwidthDataLegacy(
 ): Promise<BandwidthData[]> {
   let query = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: "${startTime}", stop: "${endTime}")
+      |> ${formatTimeRange(startTime, endTime)}
       |> filter(fn: (r) => r._measurement == "bandwidth_usage")
   `;
 
@@ -278,7 +285,7 @@ export async function queryStreamingData(
 ): Promise<StreamingData[]> {
   const query = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: "${startTime}", stop: "${endTime}")
+      |> ${formatTimeRange(startTime, endTime)}
       |> filter(fn: (r) => r._measurement == "streaming_data")
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> sort(columns: ["_time"], desc: true)
@@ -332,7 +339,7 @@ export async function getBandwidthStats(
 ) {
   let query = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: "${startTime}", stop: "${endTime}")
+      |> ${formatTimeRange(startTime, endTime)}
       |> filter(fn: (r) => r._measurement == "bandwidth_usage")
   `;
 
