@@ -85,7 +85,7 @@ NEXTAUTH_URL=http://localhost:4000
 INFLUX_URL=http://localhost:8086
 INFLUX_TOKEN=my_super_secret_admin_token_123456789
 INFLUX_ORG=streaming-org
-INFLUX_BUCKET=usage-data
+INFLUX_BUCKET=streaming-data
 
 # Redis 配置 (缓存)
 REDIS_URL=redis://:redis_pass_123@localhost:6379

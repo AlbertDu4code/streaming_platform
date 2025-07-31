@@ -10,7 +10,7 @@ const INFLUX_URL = process.env.INFLUX_URL || "http://localhost:8086";
 const INFLUX_TOKEN =
   process.env.INFLUX_TOKEN || "my_super_secret_admin_token_123456789";
 const INFLUX_ORG = process.env.INFLUX_ORG || "streaming-org";
-const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "usage-data";
+const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "streaming-data";
 
 // 创建 InfluxDB 客户端
 export const influxDB = new InfluxDB({

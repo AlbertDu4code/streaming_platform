@@ -81,7 +81,7 @@ npx prisma generate
 ### 5.2 初始化InfluxDB
 1. 访问InfluxDB管理界面
 2. 创建组织：`streaming-org`
-3. 创建存储桶：`usage-data`
+3. 创建存储桶：`streaming-data`
 4. 生成API令牌
 
 ## 步骤6：验证部署
@@ -106,7 +106,7 @@ redis://:password@host:port
 - URL: `https://your-influxdb-instance.railway.app`
 - Token: 从InfluxDB管理界面获取
 - Org: `streaming-org`
-- Bucket: `usage-data`
+- Bucket: `streaming-data`
 
 ## 故障排除
 

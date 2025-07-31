@@ -3,7 +3,7 @@ import { writeApi, influxDB } from "@/lib/influxdb";
 import { Point } from "@influxdata/influxdb-client";
 import { handleApiError, createSuccessResponse } from "@/lib/api-utils";
 
-const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "usage-data";
+const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "streaming-data";
 const INFLUX_ORG = process.env.INFLUX_ORG || "streaming-org";
 
 // 生成随机数据的辅助函数

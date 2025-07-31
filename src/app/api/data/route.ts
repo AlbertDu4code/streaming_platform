@@ -9,7 +9,7 @@ import {
   handleInfluxQueryError,
 } from "@/lib/api-utils";
 
-const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "usage-data";
+const INFLUX_BUCKET = process.env.INFLUX_BUCKET || "streaming-data";
 
 // 统一的查询逻辑
 async function queryFilterOptions(

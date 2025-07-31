@@ -1,17 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { FilterState } from "../types";
 
-const initialFilterState: FilterState = {
-  project: "",
-  tag: "",
-  domain: "",
-  region: "",
-  protocol: "",
-  dateRange: null,
-  granularity: "1hour",
-  timeRange: "today",
-};
-
 // 根据 timeRange 计算 dateRange 的辅助函数
 const calculateDateRange = (timeRange: string): string[] | null => {
   const now = new Date();
@@ -46,6 +35,17 @@ const calculateDateRange = (timeRange: string): string[] | null => {
     default:
       return null;
   }
+};
+
+const initialFilterState: FilterState = {
+  project: "",
+  tag: "",
+  domain: "",
+  region: "",
+  protocol: "",
+  dateRange: calculateDateRange("today"), // 初始化时计算 dateRange
+  granularity: "1hour",
+  timeRange: "today",
 };
 
 export const useFilterState = () => {
