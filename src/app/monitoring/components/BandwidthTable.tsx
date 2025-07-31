@@ -159,14 +159,44 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
         const queryParams = new URLSearchParams({
           current: params.current?.toString() || "1",
           pageSize: params.pageSize?.toString() || "20",
-          ...filters,
-          ...filter,
         });
 
+        // 正确处理筛选条件
+        if (filters) {
+          Object.entries(filters).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              if (
+                key === "dateRange" &&
+                Array.isArray(value) &&
+                value.length === 2
+              ) {
+                // 特殊处理 dateRange 数组
+                queryParams.append("dateRange", value.join(","));
+              } else if (
+                typeof value === "string" ||
+                typeof value === "number"
+              ) {
+                // 处理普通的字符串和数字值
+                queryParams.append(key, String(value));
+              }
+            }
+          });
+        }
+
+        // 处理 ProTable 内部的筛选条件
+        Object.entries(filter).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+          }
+        });
+
+        // 处理排序参数
         Object.keys(sort).forEach((key) => {
           queryParams.append("sortField", key);
           queryParams.append("sortOrder", sort[key] as string);
         });
+
+        console.log("请求参数:", queryParams.toString());
 
         const url = `/api/bandwidth?${queryParams.toString()}`;
         const result: ApiResponse = await fetcher(url);

@@ -24,22 +24,39 @@ export async function GET(request: NextRequest) {
 
     // 时间范围参数
     const dateRangeParam = searchParams.get("dateRange");
-    let startTime: string | null = null;
-    let endTime: string | null = null;
+    let startTime: string;
+    let endTime: string;
+
+    console.log("接收到的参数:", {
+      current,
+      pageSize,
+      project,
+      domain,
+      region,
+      tag,
+      granularity,
+      sortField,
+      sortOrder,
+      dateRangeParam,
+    });
 
     if (dateRangeParam) {
       const dates = dateRangeParam.split(",");
       if (dates.length === 2) {
-        startTime = dates[0];
-        endTime = dates[1];
+        startTime = dates[0].trim();
+        endTime = dates[1].trim();
+      } else {
+        // 如果分割后不是2个元素，使用默认值
+        endTime = dayjs().toISOString();
+        startTime = dayjs().subtract(1, "day").toISOString();
       }
-    }
-
-    // 如果没有有效的 dateRange，则使用默认值
-    if (!startTime || !endTime) {
+    } else {
+      // 如果没有 dateRange 参数，使用默认值
       endTime = dayjs().toISOString();
       startTime = dayjs().subtract(1, "day").toISOString();
     }
+
+    console.log("处理后的时间范围:", { startTime, endTime });
 
     const { data, total } = await queryBandwidthData({
       startTime,
@@ -57,6 +74,7 @@ export async function GET(request: NextRequest) {
       success: true,
     });
   } catch (error) {
+    console.error("API 错误:", error);
     return handleApiError(error, "查询带宽数据失败");
   }
 }
