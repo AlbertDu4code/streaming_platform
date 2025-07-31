@@ -3,13 +3,14 @@
 import { ProTable } from "@ant-design/pro-components";
 import { Tag, Tooltip } from "antd";
 import { formatBandwidth } from "@/lib/utils";
-import { ChartData } from "./types";
+import { ChartData, FilterState } from "./types";
 import { ClockCircleOutlined, CloudServerOutlined } from "@ant-design/icons";
 import { fetcher } from "@/lib/api-utils";
-import type { ProColumns } from "@ant-design/pro-components";
+import type { ProColumns, ProTableProps } from "@ant-design/pro-components";
+import dayjs from "dayjs";
 
 interface BandwidthTableProps {
-  filters?: Record<string, any>;
+  filters?: Partial<FilterState>;
 }
 
 interface ApiResponse {
@@ -18,27 +19,6 @@ interface ApiResponse {
 }
 
 export default function BandwidthTable({ filters }: BandwidthTableProps) {
-  // 添加调试日志
-  console.log("BandwidthTable 接收到的 filters:", filters);
-
-  // 确保 dateRange 有默认值
-  const safeFilters = {
-    ...(filters || {}),
-    dateRange:
-      filters?.dateRange ||
-      (() => {
-        const now = new Date();
-        const startDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
-        );
-        return [startDate.toISOString(), now.toISOString()];
-      })(),
-  };
-
-  console.log("BandwidthTable 处理后的 safeFilters:", safeFilters);
-
   const safeBandwidthFormat = (value: number | undefined): string => {
     if (typeof value !== "number" || isNaN(value)) {
       return "0.000 Mbps";
@@ -58,36 +38,25 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
       width: 180,
       fixed: "left" as const,
       render: (time: any) => {
-        const date = new Date(time as string);
-        if (isNaN(date.getTime())) {
+        const date = dayjs(time as string);
+        if (!date.isValid()) {
           return <Tag color="red">无效时间</Tag>;
         }
-        const formatted = date.toLocaleString("zh-CN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
         return (
-          <Tooltip title={`完整时间: ${formatted}`}>
+          <Tooltip title={`完整时间: ${date.format("YYYY-MM-DD HH:mm:ss")}`}>
             <div className="flex items-center">
               <ClockCircleOutlined className="mr-1 text-blue-500" />
               <span className="text-xs">
-                {date.toLocaleDateString("zh-CN")}
+                {date.format("YYYY-MM-DD")}
                 <br />
-                {date.toLocaleTimeString("zh-CN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {date.format("HH:mm")}
               </span>
             </div>
           </Tooltip>
         );
       },
       sorter: true,
-      defaultSortOrder: "descend" as const,
+      defaultSortOrder: "descend",
     },
     {
       title: "项目",
@@ -172,102 +141,81 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
     },
   ];
 
+  const handleRequest: ProTableProps<
+    ChartData,
+    Record<string, any>
+  >["request"] = async (params, sort) => {
+    const queryParams = new URLSearchParams();
+
+    // 合并和处理所有参数
+    const allParams = { ...filters, ...params };
+
+    // 1. 分页
+    queryParams.append("page", (allParams.current || 1).toString());
+    queryParams.append("pageSize", (allParams.pageSize || 20).toString());
+
+    // 2. 排序
+    if (sort) {
+      Object.keys(sort).forEach((key) => {
+        queryParams.append("sortField", key);
+        queryParams.append("sortOrder", sort[key] as string);
+      });
+    }
+
+    // 3. 筛选条件 (除 dateRange 外)
+    Object.entries(allParams).forEach(([key, value]) => {
+      if (
+        key !== "dateRange" &&
+        key !== "current" &&
+        key !== "pageSize" &&
+        value !== undefined &&
+        value !== null &&
+        value !== ""
+      ) {
+        queryParams.append(key, String(value));
+      }
+    });
+
+    // 4. 时间范围 (最关键)
+    let dateRangeToUse = allParams.dateRange;
+    if (
+      !dateRangeToUse ||
+      !Array.isArray(dateRangeToUse) ||
+      dateRangeToUse.length !== 2
+    ) {
+      // 提供一个可靠的默认值
+      const now = dayjs();
+      dateRangeToUse = [now.subtract(1, "day"), now];
+    }
+    // 在最后一刻格式化
+    queryParams.append("startTime", dateRangeToUse[0].toISOString());
+    queryParams.append("endTime", dateRangeToUse[1].toISOString());
+
+    const url = `/api/bandwidth?${queryParams.toString()}`;
+    console.log("请求 URL:", url);
+
+    try {
+      const result: ApiResponse = await fetcher(url);
+      return {
+        data: result.data || [],
+        success: true,
+        total: result.total || 0,
+      };
+    } catch (error) {
+      console.error("API 请求失败:", error);
+      return {
+        data: [],
+        success: false,
+        total: 0,
+      };
+    }
+  };
+
   return (
     <ProTable<ChartData>
       columns={columns}
       cardBordered
-      request={async (params, sort, filter) => {
-        console.log("ProTable request 参数:", {
-          params,
-          sort,
-          filter,
-          filters,
-        });
-
-        const queryParams = new URLSearchParams({
-          current: params.current?.toString() || "1",
-          pageSize: params.pageSize?.toString() || "20",
-        });
-
-        // 合并外部和ProTable自身的过滤器
-        const currentFilters = { ...safeFilters, ...params };
-
-        // 增强的默认时间范围处理
-        if (
-          !currentFilters.dateRange ||
-          !Array.isArray(currentFilters.dateRange) ||
-          currentFilters.dateRange.length !== 2 ||
-          !currentFilters.dateRange[0] ||
-          !currentFilters.dateRange[1]
-        ) {
-          const now = new Date();
-          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          currentFilters.dateRange = [
-            yesterday.toISOString(),
-            now.toISOString(),
-          ];
-          console.log("使用默认时间范围:", currentFilters.dateRange);
-        }
-
-        // 正确处理筛选条件
-        if (currentFilters) {
-          Object.entries(currentFilters).forEach(([key, value]) => {
-            console.log(`处理筛选条件 ${key}:`, value, typeof value);
-
-            if (value !== undefined && value !== null && value !== "") {
-              if (
-                key === "dateRange" &&
-                Array.isArray(value) &&
-                value.length === 2
-              ) {
-                // 特殊处理 dateRange 数组
-                const dateRangeString = value.join(",");
-                console.log("添加 dateRange 参数:", dateRangeString);
-                queryParams.append("dateRange", dateRangeString);
-              } else if (
-                typeof value === "string" ||
-                typeof value === "number"
-              ) {
-                // 处理普通的字符串和数字值
-                console.log(`添加参数 ${key}:`, String(value));
-                queryParams.append(key, String(value));
-              }
-            }
-          });
-        }
-
-        // 处理 ProTable 内部的筛选条件
-        Object.entries(filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            queryParams.append(key, String(value));
-          }
-        });
-
-        // 处理排序参数
-        Object.keys(sort).forEach((key) => {
-          queryParams.append("sortField", key);
-          queryParams.append("sortOrder", sort[key] as string);
-        });
-
-        console.log("最终请求参数:", queryParams.toString());
-
-        const url = `/api/bandwidth?${queryParams.toString()}`;
-        console.log("请求 URL:", url);
-
-        try {
-          const result: ApiResponse = await fetcher(url);
-          console.log("API 响应:", result);
-
-          return {
-            data: result.data,
-            success: true,
-            total: result.total,
-          };
-        } catch (error) {
-          console.error("API 请求失败:", error);
-          throw error;
-        }
-      }}
+      request={handleRequest}
       rowKey={(record) => `${record.time}-${record.project}-${Math.random()}`}
       pagination={{
         pageSize: 20,
@@ -279,7 +227,7 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
       search={false}
       headerTitle="带宽数据详情"
       toolBarRender={false}
-      params={safeFilters} // 将处理后的筛选条件作为 ProTable 的查询参数
+      params={filters}
     />
   );
 }

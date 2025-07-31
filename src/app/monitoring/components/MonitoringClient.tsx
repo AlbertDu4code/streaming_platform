@@ -50,21 +50,27 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
     setTimeRange(timeRange);
   };
 
-  // 自动根据筛选条件加载数据
+  // 自动根据激活的tab和筛选条件加载数据
   useEffect(() => {
-    if (filters.project) {
-      loadBandwidthData(filters);
-      loadStreamingData(filters);
-      loadStorageData(filters);
-      loadLiveData(filters);
-      loadDurationData(filters);
-      loadScreenshotData(filters);
-      loadPushData(filters);
-      loadTranscodeData(filters);
-      loadDirectData(filters);
-      loadGuideData(filters);
+    const dataLoaders: { [key: string]: (filters: FilterState) => void } = {
+      bandwidth: loadBandwidthData,
+      streaming: loadStreamingData,
+      storage: loadStorageData,
+      live: loadLiveData,
+      duration: loadDurationData,
+      screenshot: loadScreenshotData,
+      push: loadPushData,
+      transcode: loadTranscodeData,
+      direct: loadDirectData,
+      guide: loadGuideData,
+    };
+
+    const loadDataForActiveTab = dataLoaders[activeTab];
+    if (loadDataForActiveTab && filters.project) {
+      loadDataForActiveTab(filters);
     }
   }, [
+    activeTab,
     filters,
     loadBandwidthData,
     loadStreamingData,
@@ -157,13 +163,8 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
               onProtocolChange={(value) =>
                 handleFilterChange({ protocol: value })
               }
-              onDateRangeChange={(dateStrings) =>
-                handleFilterChange({
-                  dateRange:
-                    dateStrings && dateStrings.length === 2
-                      ? dateStrings
-                      : null,
-                })
+              onDateRangeChange={(dates) =>
+                handleFilterChange({ dateRange: dates })
               }
               onGranularityChange={(value) =>
                 handleFilterChange({ granularity: value })

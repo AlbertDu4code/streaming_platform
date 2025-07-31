@@ -1,3 +1,5 @@
+import type { Dayjs } from "dayjs";
+
 // 统一的类型定义
 export interface User {
   id?: string;
@@ -27,7 +29,7 @@ export interface FilterState {
   domain: string;
   region: string;
   protocol: string;
-  dateRange: string[] | null;
+  dateRange: [Dayjs, Dayjs] | null;
   granularity: string;
   timeRange: string;
 }

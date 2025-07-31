@@ -97,8 +97,8 @@ export const useMonitoringData = () => {
           "到",
           filters.dateRange[1]
         );
-        params.append("startTime", filters.dateRange[0]);
-        params.append("endTime", filters.dateRange[1]);
+        params.append("startTime", filters.dateRange[0].toISOString());
+        params.append("endTime", filters.dateRange[1].toISOString());
       } else {
         console.log("❌ dateRange 无效，将使用后端默认值");
       }
@@ -149,8 +149,8 @@ export const useMonitoringData = () => {
           });
 
           if (filters.dateRange && filters.dateRange.length === 2) {
-            params.append("startTime", filters.dateRange[0]);
-            params.append("endTime", filters.dateRange[1]);
+            params.append("startTime", filters.dateRange[0].toISOString());
+            params.append("endTime", filters.dateRange[1].toISOString());
           }
 
           const result = await fetcher<ApiResponse<T[]>>(

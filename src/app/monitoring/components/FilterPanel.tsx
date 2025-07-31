@@ -17,13 +17,15 @@ import { OptionType } from "./types";
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
+import type { Dayjs } from "dayjs";
+
 interface FilterPanelProps {
   project: string;
   tag: string;
   domain: string;
   region: string;
   protocol: string;
-  dateRange: string[] | null;
+  dateRange: [Dayjs, Dayjs] | null;
   granularity: string;
   timeRange: string;
   onProjectChange: (value: string) => void;
@@ -31,7 +33,7 @@ interface FilterPanelProps {
   onDomainChange: (value: string) => void;
   onRegionChange: (value: string) => void;
   onProtocolChange: (value: string) => void;
-  onDateRangeChange: (dateStrings: string[], dates: any[]) => void;
+  onDateRangeChange: (dates: [Dayjs, Dayjs] | null) => void;
   onGranularityChange: (value: string) => void;
   onTimeRangeChange: (value: string) => void;
   projectOptions: OptionType[];
@@ -157,19 +159,12 @@ export default function FilterPanel({
             <RangePicker
               showTime
               style={{ width: 300 }}
-              value={
-                dateRange
-                  ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
-                  : undefined
-              }
+              value={dateRange}
               onChange={(dates) => {
-                if (dates && dates.length === 2) {
-                  onDateRangeChange(
-                    [dates[0]!.toISOString(), dates[1]!.toISOString()],
-                    dates
-                  );
+                if (dates && dates[0] && dates[1]) {
+                  onDateRangeChange([dates[0], dates[1]]);
                 } else {
-                  onDateRangeChange([], []);
+                  onDateRangeChange(null);
                 }
               }}
             />
