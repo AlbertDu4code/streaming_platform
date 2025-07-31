@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FilterState } from "../types";
 
 const initialFilterState: FilterState = {
@@ -12,8 +12,51 @@ const initialFilterState: FilterState = {
   timeRange: "today",
 };
 
+// 根据 timeRange 计算 dateRange 的辅助函数
+const calculateDateRange = (timeRange: string): string[] | null => {
+  const now = new Date();
+  let startDate: Date;
+
+  switch (timeRange) {
+    case "today":
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return [startDate.toISOString(), now.toISOString()];
+    case "yesterday":
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      startDate = new Date(
+        yesterday.getFullYear(),
+        yesterday.getMonth(),
+        yesterday.getDate()
+      );
+      const endDate = new Date(
+        yesterday.getFullYear(),
+        yesterday.getMonth(),
+        yesterday.getDate(),
+        23,
+        59,
+        59
+      );
+      return [startDate.toISOString(), endDate.toISOString()];
+    case "7days":
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return [startDate.toISOString(), now.toISOString()];
+    case "30days":
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return [startDate.toISOString(), now.toISOString()];
+    default:
+      return null;
+  }
+};
+
 export const useFilterState = () => {
-  const [filters, setFilters] = useState<FilterState>(initialFilterState);
+  // 初始化时计算正确的 dateRange
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const dateRange = calculateDateRange(initialFilterState.timeRange);
+    return {
+      ...initialFilterState,
+      dateRange,
+    };
+  });
 
   // 更新单个筛选条件
   const updateFilter = useCallback((key: keyof FilterState, value: any) => {
@@ -27,51 +70,23 @@ export const useFilterState = () => {
 
   // 重置筛选条件
   const resetFilters = useCallback(() => {
-    setFilters(initialFilterState);
+    const dateRange = calculateDateRange(initialFilterState.timeRange);
+    setFilters({
+      ...initialFilterState,
+      dateRange,
+    });
   }, []);
 
   // 时间范围快捷选择
   const setTimeRange = useCallback((timeRange: string) => {
-    const now = new Date();
-    let startDate: Date;
-    let dateRange: string[] | null = null;
-
-    switch (timeRange) {
-      case "today":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        dateRange = [startDate.toISOString(), now.toISOString()];
-        break;
-      case "yesterday":
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        startDate = new Date(
-          yesterday.getFullYear(),
-          yesterday.getMonth(),
-          yesterday.getDate()
-        );
-        const endDate = new Date(
-          yesterday.getFullYear(),
-          yesterday.getMonth(),
-          yesterday.getDate(),
-          23,
-          59,
-          59
-        );
-        dateRange = [startDate.toISOString(), endDate.toISOString()];
-        break;
-      case "7days":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        dateRange = [startDate.toISOString(), now.toISOString()];
-        break;
-      case "30days":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        dateRange = [startDate.toISOString(), now.toISOString()];
-        break;
-      default:
-        dateRange = null;
-    }
-
+    const dateRange = calculateDateRange(timeRange);
     setFilters((prev) => ({ ...prev, timeRange, dateRange }));
   }, []);
+
+  // 添加调试日志
+  useEffect(() => {
+    console.log("当前 filters 状态:", filters);
+  }, [filters]);
 
   return {
     filters,

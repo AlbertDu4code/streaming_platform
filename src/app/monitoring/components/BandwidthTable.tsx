@@ -18,6 +18,9 @@ interface ApiResponse {
 }
 
 export default function BandwidthTable({ filters }: BandwidthTableProps) {
+  // 添加调试日志
+  console.log("BandwidthTable 接收到的 filters:", filters);
+
   const safeBandwidthFormat = (value: number | undefined): string => {
     if (typeof value !== "number" || isNaN(value)) {
       return "0.000 Mbps";
@@ -156,6 +159,13 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
       columns={columns}
       cardBordered
       request={async (params, sort, filter) => {
+        console.log("ProTable request 参数:", {
+          params,
+          sort,
+          filter,
+          filters,
+        });
+
         const queryParams = new URLSearchParams({
           current: params.current?.toString() || "1",
           pageSize: params.pageSize?.toString() || "20",
@@ -164,6 +174,8 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
         // 正确处理筛选条件
         if (filters) {
           Object.entries(filters).forEach(([key, value]) => {
+            console.log(`处理筛选条件 ${key}:`, value, typeof value);
+
             if (value !== undefined && value !== null) {
               if (
                 key === "dateRange" &&
@@ -171,12 +183,15 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
                 value.length === 2
               ) {
                 // 特殊处理 dateRange 数组
-                queryParams.append("dateRange", value.join(","));
+                const dateRangeString = value.join(",");
+                console.log("添加 dateRange 参数:", dateRangeString);
+                queryParams.append("dateRange", dateRangeString);
               } else if (
                 typeof value === "string" ||
                 typeof value === "number"
               ) {
                 // 处理普通的字符串和数字值
+                console.log(`添加参数 ${key}:`, String(value));
                 queryParams.append(key, String(value));
               }
             }
@@ -196,16 +211,24 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
           queryParams.append("sortOrder", sort[key] as string);
         });
 
-        console.log("请求参数:", queryParams.toString());
+        console.log("最终请求参数:", queryParams.toString());
 
         const url = `/api/bandwidth?${queryParams.toString()}`;
-        const result: ApiResponse = await fetcher(url);
+        console.log("请求 URL:", url);
 
-        return {
-          data: result.data,
-          success: true,
-          total: result.total,
-        };
+        try {
+          const result: ApiResponse = await fetcher(url);
+          console.log("API 响应:", result);
+
+          return {
+            data: result.data,
+            success: true,
+            total: result.total,
+          };
+        } catch (error) {
+          console.error("API 请求失败:", error);
+          throw error;
+        }
       }}
       rowKey={(record) => `${record.time}-${record.project}-${Math.random()}`}
       pagination={{
