@@ -1,49 +1,69 @@
-import React from "react";
+import React, { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { ChartData, TimeRange } from "./types";
+import { ChartData } from "./types";
 import dayjs from "dayjs";
 
 interface BandwidthChartProps {
   data: ChartData[];
   loading?: boolean;
-  timeRange?: TimeRange;
+  type?: "line" | "bar";
+  height?: number;
 }
 
-export default function BandwidthChart({ data, loading }: BandwidthChartProps) {
-  const option = {
-    tooltip: { trigger: "axis" },
-    legend: { data: ["上行带宽峰值", "下行带宽峰值"] },
-    xAxis: {
-      type: "category",
-      data: data.map((d) => dayjs(d.time).format("YYYY-MM月DD日 HH:mm")),
-      axisLabel: { formatter: (value: string) => value.slice(5, 16) },
-    },
-    yAxis: { type: "value", name: "Mbps" },
-    series: [
-      {
-        name: "上行带宽峰值",
-        type: "line",
-        smooth: true,
-        data: data.map((d) => d.upload),
-        lineStyle: { color: "#3b82f6" },
+export default function BandwidthChart({
+  data,
+  loading,
+  type = "line",
+  height = 400,
+}: BandwidthChartProps) {
+  const option = useMemo(() => {
+    const xAxisData = data.map((d) => dayjs(d.time).format("YYYY-MM-DD HH:mm"));
+    const uploadData = data.map((d) => d.upload || 0);
+    const downloadData = data.map((d) => d.download || 0);
+
+    return {
+      tooltip: {
+        trigger: "axis",
+        axisPointer: {
+          animation: false, // 关键：禁用动画减少闪烁
+        },
       },
-      {
-        name: "下行带宽峰值",
-        type: "line",
-        smooth: true,
-        data: data.map((d) => d.download),
-        lineStyle: { color: "#10b981" },
+      legend: { data: ["上行带宽峰值", "下行带宽峰值"] },
+      xAxis: {
+        type: "category",
+        data: xAxisData,
+        axisLabel: { formatter: (value: string) => value.slice(5, 16) },
       },
-    ],
-  };
+      yAxis: { type: "value", name: "Mbps" },
+      series: [
+        {
+          name: "上行带宽峰值",
+          type,
+          data: uploadData,
+          smooth: type === "line",
+          lineStyle: type === "line" ? { color: "#3b82f6" } : undefined,
+          itemStyle: type === "bar" ? { color: "#3b82f6" } : undefined,
+        },
+        {
+          name: "下行带宽峰值",
+          type,
+          data: downloadData,
+          smooth: type === "line",
+          lineStyle: type === "line" ? { color: "#10b981" } : undefined,
+          itemStyle: type === "bar" ? { color: "#10b981" } : undefined,
+        },
+      ],
+      animation: false, // 关键：禁用动画
+    };
+  }, [data, type]);
 
   return (
     <ReactECharts
       option={option}
-      style={{ width: "100%", height: 400 }}
+      style={{ width: "100%", height }}
       showLoading={loading}
-      notMerge
-      lazyUpdate
+      notMerge={true}
+      lazyUpdate={true}
     />
   );
 }

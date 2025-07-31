@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import { Layout, Card, Tabs, message } from "antd";
 import AppHeader from "./Header";
 import FilterPanel from "./FilterPanel";
-import TabContent from "./TabContent";
+import { getTabItems, getTabComponent } from "./TabConfig";
 import { User, FilterState } from "./types";
 import { useMonitoringData } from "./hooks/useMonitoringData";
 import { useFilterState } from "./hooks/useFilterState";
@@ -22,7 +22,7 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   const [activeTab, setActiveTab] = useState("bandwidth");
   const [viewMode, setViewMode] = useState("line");
 
-  const { filters, setFilters, setTimeRange } = useFilterState();
+  const { filters, updateFilters, setTimeRange } = useFilterState();
   const {
     loading,
     chartData,
@@ -51,7 +51,7 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
 
   // 统一处理筛选条件变化
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
-    setFilters((prevFilters) => ({ ...prevFilters, ...newFilters }));
+    updateFilters(newFilters);
   };
 
   // 处理时间范围快捷选择
@@ -99,18 +99,8 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
     }
   };
 
-  const tabItems = [
-    { key: "bandwidth", label: "带宽用量" },
-    { key: "streaming", label: "流量用量" },
-    { key: "live", label: "推拉流监控" },
-    { key: "storage", label: "存储用量" },
-    { key: "duration", label: "转码时长" },
-    { key: "screenshot", label: "截图张数" },
-    { key: "push", label: "拉流转推" },
-    { key: "transcode", label: "转推带宽" },
-    { key: "direct", label: "直播带宽" },
-    { key: "guide", label: "云导播" },
-  ];
+  // 从配置中获取tab项目
+  const tabItems = getTabItems();
 
   return (
     <Layout style={{ minHeight: "100vh", background: "#f7fafc" }}>
@@ -171,23 +161,22 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
             regionOptions={options.regionOptions}
           />
 
-          <TabContent
-            activeTab={activeTab}
-            chartData={chartData}
-            streamingData={streamingData}
-            storageData={storageData}
-            liveData={liveData}
-            durationData={durationData}
-            screenshotData={screenshotData}
-            pushData={pushData}
-            transcodeData={transcodeData}
-            directData={directData}
-            guideData={guideData}
-            loading={loading}
-            viewMode={viewMode}
-            dateRange={filters.dateRange}
-            onViewModeChange={setViewMode}
-          />
+          {getTabComponent(activeTab, {
+            chartData,
+            streamingData,
+            storageData,
+            liveData,
+            durationData,
+            screenshotData,
+            pushData,
+            transcodeData,
+            directData,
+            guideData,
+            loading,
+            viewMode,
+            dateRange: filters.dateRange,
+            onViewModeChange: setViewMode,
+          })}
         </div>
       </Content>
     </Layout>

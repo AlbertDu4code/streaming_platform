@@ -41,19 +41,23 @@ async function verifyInfluxConnection(): Promise<{
       };
     }
 
-    // 测试健康检查
-    const healthApi = influxDB.getHealthApi();
-    const health = await healthApi.getHealth();
-
-    if (health.status !== "pass") {
+    // 使用查询API测试连接（更稳定的方法）
+    try {
+      const queryApi = influxDB.getQueryApi(
+        process.env.INFLUX_ORG || "streaming-org"
+      );
+      // 执行一个简单的buckets查询来测试连接
+      const testQuery = `buckets() |> limit(n: 1)`;
+      await queryApi.collectRows(testQuery);
+      console.log("InfluxDB连接验证成功");
+      return { success: true };
+    } catch (queryError) {
+      console.error("InfluxDB查询测试失败:", queryError);
       return {
         success: false,
-        error: `InfluxDB健康检查失败: ${health.message}`,
+        error: `InfluxDB连接验证失败: ${queryError instanceof Error ? queryError.message : "查询测试失败"}`,
       };
     }
-
-    console.log("InfluxDB连接验证成功");
-    return { success: true };
   } catch (error) {
     console.error("InfluxDB连接验证失败:", error);
     return {
