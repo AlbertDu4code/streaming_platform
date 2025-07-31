@@ -42,14 +42,23 @@ export function formatBytes(bytes: number, decimals = 2) {
 
 export function formatBandwidth(bps: number, decimals = 2) {
   if (!+bps) return "0 bps";
-
   const k = 1000;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"];
-
+  if (bps < k) {
+    return `${bps.toFixed(dm)} bps`;
+  }
   const i = Math.floor(Math.log(bps) / Math.log(k));
-
   return `${parseFloat((bps / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+export function formatDuration(minutes: number, decimals = 2) {
+  if (!+minutes) return "0 分钟";
+  return `${minutes.toFixed(decimals)} 分钟`;
+}
+
+export function formatCount(count: number) {
+  return new Intl.NumberFormat().format(count);
 }
 
 export function formatDate(
@@ -76,38 +85,4 @@ export function formatDate(
 
 export function generateTaskId() {
   return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-// Arco Design 相关工具函数
-export function getArcoThemeVars(isDark = false) {
-  return {
-    "--primary-color": isDark ? "#4080ff" : "#165dff",
-    "--success-color": "#00b42a",
-    "--warning-color": "#ff7d00",
-    "--error-color": "#f53f3f",
-    "--color-bg-1": isDark ? "#17171a" : "#ffffff",
-    "--color-bg-2": isDark ? "#232324" : "#f7f8fa",
-    "--color-text-1": isDark ? "#f7f8fa" : "#1d2129",
-    "--color-text-2": isDark ? "#c9cdd4" : "#4e5969",
-    "--color-border-2": isDark ? "#313132" : "#e5e6eb",
-  };
-}
-
-export function createArcoTableColumns<T>(
-  columns: Array<{
-    title: string;
-    dataIndex: keyof T;
-    key?: string;
-    width?: number;
-    align?: "left" | "center" | "right";
-    render?: (value: any, record: T, index: number) => React.ReactNode;
-    sorter?: boolean | ((a: T, b: T) => number);
-    filters?: Array<{ text: string; value: any }>;
-    onFilter?: (value: any, record: T) => boolean;
-  }>
-) {
-  return columns.map((col) => ({
-    ...col,
-    key: col.key || String(col.dataIndex),
-  }));
 }

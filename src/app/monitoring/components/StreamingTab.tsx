@@ -7,11 +7,63 @@ import {
   DesktopOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
-import { formatBandwidth, formatBytes } from "@/lib/utils";
+import {
+  formatBandwidth,
+  formatBytes,
+  formatCurrency,
+  formatDuration,
+  formatCount,
+} from "@/lib/utils";
 
 interface StreamingTabProps {
   streamingData: any[];
 }
+
+const renderStatistics = (
+  totalDataUsage: number,
+  totalCost: number,
+  avgQuality: string,
+  todayWatch: number
+) => (
+  <Row gutter={[16, 16]}>
+    <Col span={6}>
+      <Card>
+        <Statistic
+          title="总数据使用"
+          value={formatBytes(totalDataUsage * 1024 * 1024 * 1024)}
+          prefix={<DatabaseOutlined style={{ color: "#00b42a" }} />}
+        />
+      </Card>
+    </Col>
+    <Col span={6}>
+      <Card>
+        <Statistic
+          title="总费用"
+          value={formatCurrency(totalCost)}
+          prefix={<DownOutlined style={{ color: "#f53f3f" }} />}
+        />
+      </Card>
+    </Col>
+    <Col span={6}>
+      <Card>
+        <Statistic
+          title="平均画质"
+          value={avgQuality}
+          prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
+        />
+      </Card>
+    </Col>
+    <Col span={6}>
+      <Card>
+        <Statistic
+          title="今日观看"
+          value={formatDuration(todayWatch)}
+          prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
+        />
+      </Card>
+    </Col>
+  </Row>
+);
 
 export default function StreamingTab({ streamingData }: StreamingTabProps) {
   // 动态统计数据
@@ -77,12 +129,14 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
       dataIndex: "duration",
       key: "duration",
       width: 120,
+      render: (duration: number) => formatDuration(duration),
     },
     {
       title: "观看人数",
       dataIndex: "viewers",
       key: "viewers",
       width: 100,
+      render: (viewers: number) => formatCount(viewers),
     },
     {
       title: "状态",
@@ -119,52 +173,17 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
     key: `${item.id}-${index}`,
   }));
 
+  const statistics = renderStatistics(
+    totalDataUsage,
+    totalCost,
+    avgQuality,
+    todayWatch
+  );
+
   if (!streamingData || streamingData.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {/* 流媒体统计 */}
-        <Row gutter={[16, 16]}>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="总数据使用"
-                value={formatBytes(totalDataUsage * 1024 * 1024 * 1024)}
-                prefix={<DatabaseOutlined style={{ color: "#00b42a" }} />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="总费用"
-                value={totalCost}
-                precision={2}
-                prefix={<DownOutlined style={{ color: "#f53f3f" }} />}
-                suffix="￥"
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="平均画质"
-                value={avgQuality}
-                prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="今日观看"
-                value={todayWatch}
-                suffix="分钟"
-                prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
-              />
-            </Card>
-          </Col>
-        </Row>
-
+        {statistics}
         {/* 空状态 */}
         <Card title="流媒体使用记录">
           <Empty
@@ -178,49 +197,7 @@ export default function StreamingTab({ streamingData }: StreamingTabProps) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* 流媒体统计 */}
-      <Row gutter={[16, 16]}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总数据使用"
-              value={formatBytes(totalDataUsage * 1024 * 1024 * 1024)}
-              prefix={<DatabaseOutlined style={{ color: "#00b42a" }} />}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总费用"
-              value={totalCost}
-              precision={2}
-              prefix={<DownOutlined style={{ color: "#f53f3f" }} />}
-              suffix="￥"
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="平均画质"
-              value={avgQuality}
-              prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="今日观看"
-              value={todayWatch}
-              suffix="分钟"
-              prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
+      {statistics}
       {/* 使用记录表格 */}
       <Card title="流媒体使用记录">
         <Table

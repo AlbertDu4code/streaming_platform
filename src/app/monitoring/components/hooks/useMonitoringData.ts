@@ -1,41 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { message } from "antd";
-import { ChartData, OptionType, FilterState } from "../types";
-
-// API 调用函数
-const fetchData = async (url: string) => {
-  try {
-    const response = await fetch(url);
-    if (response.ok) {
-      const result = await response.json();
-      return result.success ? result.data : [];
-    }
-  } catch (error) {
-    console.error("API调用失败:", error);
-  }
-  return [];
-};
-
-const fetchStreamingData = async (): Promise<any[]> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    const response = await fetch("/api/data?type=streaming", {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const result = await response.json();
-      return result.success ? result.data : [];
-    }
-  } catch (error) {
-    console.error("获取流媒体数据失败:", error);
-  }
-  return [];
-};
+import { ChartData, OptionType, FilterState, ApiResponse } from "../types";
+import { fetcher } from "@/lib/api-utils";
+import { HttpError } from "@/lib/errors";
 
 export const useMonitoringData = () => {
   const [loading, setLoading] = useState(false);
@@ -56,31 +23,39 @@ export const useMonitoringData = () => {
     regionOptions: [] as OptionType[],
   });
 
+  const handleError = (error: unknown, defaultMessage: string) => {
+    if (error instanceof HttpError) {
+      message.error(error.message);
+    } else {
+      message.error(defaultMessage);
+    }
+    console.error(defaultMessage, error);
+  };
+
   // 加载筛选项
   const loadOptions = useCallback(async () => {
     try {
-      const [projectsRes, tagsRes, domainsRes, regionsRes] = await Promise.all([
-        fetch("/api/data?type=projects"),
-        fetch("/api/data?type=filters&filterType=tags"),
-        fetch("/api/data?type=filters&filterType=domains"),
-        fetch("/api/data?type=filters&filterType=regions"),
-      ]);
-
       const [projects, tags, domains, regions] = await Promise.all([
-        projectsRes.ok ? projectsRes.json() : { success: false, data: [] },
-        tagsRes.ok ? tagsRes.json() : { success: false, data: [] },
-        domainsRes.ok ? domainsRes.json() : { success: false, data: [] },
-        regionsRes.ok ? regionsRes.json() : { success: false, data: [] },
+        fetcher<ApiResponse<OptionType[]>>("/api/data?type=projects"),
+        fetcher<ApiResponse<OptionType[]>>(
+          "/api/data?type=filters&filterType=tags"
+        ),
+        fetcher<ApiResponse<OptionType[]>>(
+          "/api/data?type=filters&filterType=domains"
+        ),
+        fetcher<ApiResponse<OptionType[]>>(
+          "/api/data?type=filters&filterType=regions"
+        ),
       ]);
 
       setOptions({
-        projectOptions: projects.success ? projects.data : [],
-        tagOptions: tags.success ? tags.data : [],
-        domainOptions: domains.success ? domains.data : [],
-        regionOptions: regions.success ? regions.data : [],
+        projectOptions: projects.data ?? [],
+        tagOptions: tags.data ?? [],
+        domainOptions: domains.data ?? [],
+        regionOptions: regions.data ?? [],
       });
     } catch (error) {
-      console.error("加载筛选项失败:", error);
+      handleError(error, "加载筛选项失败");
       setOptions({
         projectOptions: [],
         tagOptions: [],
@@ -99,226 +74,114 @@ export const useMonitoringData = () => {
 
     setLoading(true);
     try {
-      let startTime: string | undefined;
-      let endTime: string | undefined;
-      if (filters.dateRange && filters.dateRange.length === 2) {
-        startTime = filters.dateRange[0];
-        endTime = filters.dateRange[1];
-      }
+      const params = new URLSearchParams({
+        type: "bandwidth",
+        project: filters.project,
+      });
 
-      const params = new URLSearchParams();
-      params.append("type", "bandwidth");
-      params.append("project", filters.project);
       if (filters.tag && filters.tag !== "all")
         params.append("tag", filters.tag);
       if (filters.domain && filters.domain !== "all")
         params.append("domain", filters.domain);
       if (filters.region && filters.region !== "all")
         params.append("region", filters.region);
-      if (startTime) params.append("startTime", startTime);
-      if (endTime) params.append("endTime", endTime);
+      if (filters.dateRange && filters.dateRange.length === 2) {
+        params.append("startTime", filters.dateRange[0]);
+        params.append("endTime", filters.dateRange[1]);
+      }
       if (filters.granularity)
         params.append("granularity", filters.granularity);
 
-      const response = await fetch(`/api/data?${params.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        const newData = result.success ? result.data : [];
-        setChartData(newData);
+      const result = await fetcher<ApiResponse<ChartData[]>>(
+        `/api/data?${params.toString()}`
+      );
+      const newData = result.data ?? [];
+      setChartData(newData);
 
-        if (newData.length > 0) {
-          message.success(
-            `已加载${filters.project}的带宽数据 (共${newData.length}条记录)`
-          );
-        } else {
-          message.warning("当前筛选条件下暂无数据");
-        }
+      if (newData.length > 0) {
+        message.success(
+          `已加载${filters.project}的带宽数据 (共${newData.length}条记录)`
+        );
       } else {
-        setChartData([]);
-        message.error("加载数据失败");
+        message.warning("当前筛选条件下暂无数据");
       }
     } catch (error) {
-      message.error("加载数据失败");
+      handleError(error, "加载带宽数据失败");
       setChartData([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 加载流媒体数据
-  const loadStreamingData = useCallback(async () => {
-    const data = await fetchStreamingData();
-    setStreamingData(data);
-  }, []);
-
-  // 加载存储用量数据
-  const loadStorageData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=storage");
-      if (response.ok) {
-        const result = await response.json();
-        setStorageData(result.success ? result.data : []);
-      } else {
-        setStorageData([]);
+  const createDataLoader = <T>(
+    type: string,
+    setter: React.Dispatch<React.SetStateAction<T[]>>,
+    errorMessage: string
+  ) =>
+    useCallback(async () => {
+      setLoading(true);
+      try {
+        const result = await fetcher<ApiResponse<T[]>>(
+          `/api/data?type=${type}`
+        );
+        setter(result.data ?? []);
+      } catch (error) {
+        handleError(error, errorMessage);
+        setter([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setStorageData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    }, [setter, type, errorMessage]);
 
-  // 加载直播流数据
-  const loadLiveData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=live");
-      if (response.ok) {
-        const result = await response.json();
-        setLiveData(result.success ? result.data : []);
-      } else {
-        setLiveData([]);
-      }
-    } catch (error) {
-      setLiveData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadStreamingData = createDataLoader(
+    "streaming",
+    setStreamingData,
+    "获取流媒体数据失败"
+  );
+  const loadStorageData = createDataLoader(
+    "storage",
+    setStorageData,
+    "获取存储用量失败"
+  );
+  const loadLiveData = createDataLoader(
+    "live",
+    setLiveData,
+    "获取直播流数据失败"
+  );
+  const loadDurationData = createDataLoader(
+    "duration",
+    setDurationData,
+    "获取转码时长失败"
+  );
+  const loadScreenshotData = createDataLoader(
+    "screenshot",
+    setScreenshotData,
+    "获取截图数据失败"
+  );
+  const loadPushData = createDataLoader(
+    "push",
+    setPushData,
+    "获取拉流转推数据失败"
+  );
+  const loadTranscodeData = createDataLoader(
+    "transcode",
+    setTranscodeData,
+    "获取转推带宽失败"
+  );
+  const loadDirectData = createDataLoader(
+    "direct",
+    setDirectData,
+    "获取直播录制数据失败"
+  );
+  const loadGuideData = createDataLoader(
+    "guide",
+    setGuideData,
+    "获取虚拟主播数据失败"
+  );
 
-  // 加载转码时长数据
-  const loadDurationData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=duration");
-      if (response.ok) {
-        const result = await response.json();
-        setDurationData(result.success ? result.data : []);
-      } else {
-        setDurationData([]);
-      }
-    } catch (error) {
-      setDurationData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 加载截图数据
-  const loadScreenshotData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=screenshot");
-      if (response.ok) {
-        const result = await response.json();
-        setScreenshotData(result.success ? result.data : []);
-      } else {
-        setScreenshotData([]);
-      }
-    } catch (error) {
-      setScreenshotData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 加载拉流转推数据
-  const loadPushData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=push");
-      if (response.ok) {
-        const result = await response.json();
-        setPushData(result.success ? result.data : []);
-      } else {
-        setPushData([]);
-      }
-    } catch (error) {
-      setPushData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 加载转推带宽数据
-  const loadTranscodeData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=transcode");
-      if (response.ok) {
-        const result = await response.json();
-        setTranscodeData(result.success ? result.data : []);
-      } else {
-        setTranscodeData([]);
-      }
-    } catch (error) {
-      setTranscodeData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 加载直播带宽数据
-  const loadDirectData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=direct");
-      if (response.ok) {
-        const result = await response.json();
-        setDirectData(result.success ? result.data : []);
-      } else {
-        setDirectData([]);
-      }
-    } catch (error) {
-      setDirectData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 加载云导播数据
-  const loadGuideData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/data?type=guide");
-      if (response.ok) {
-        const result = await response.json();
-        setGuideData(result.success ? result.data : []);
-      } else {
-        setGuideData([]);
-      }
-    } catch (error) {
-      setGuideData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 初始化数据
   useEffect(() => {
     loadOptions();
-    loadStreamingData();
-    loadStorageData();
-    loadLiveData();
-    loadDurationData();
-    loadScreenshotData();
-    loadPushData();
-    loadTranscodeData();
-    loadDirectData();
-    loadGuideData();
-  }, [
-    loadOptions,
-    loadStreamingData,
-    loadStorageData,
-    loadLiveData,
-    loadDurationData,
-    loadScreenshotData,
-    loadPushData,
-    loadTranscodeData,
-    loadDirectData,
-    loadGuideData,
-  ]);
+  }, [loadOptions]);
 
   return {
     loading,
@@ -343,5 +206,6 @@ export const useMonitoringData = () => {
     loadTranscodeData,
     loadDirectData,
     loadGuideData,
+    loadOptions,
   };
 };

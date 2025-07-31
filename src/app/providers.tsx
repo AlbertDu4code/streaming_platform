@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
+import { HttpError } from "@/lib/errors";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -17,15 +18,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             gcTime: 10 * 60 * 1000, // 10分钟
             retry: (failureCount, error) => {
               // 401错误不重试
-              if (
-                error &&
-                typeof error === "object" &&
-                "status" in error &&
-                error.status === 401
-              ) {
+              if (error instanceof HttpError && error.status === 401) {
                 return false;
               }
-              return failureCount < 5;
+              return failureCount < 3;
             },
           },
         },

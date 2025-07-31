@@ -1,5 +1,6 @@
 import { Card, Row, Col, Statistic, Table } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
+import { formatDuration, formatCount, formatDate } from "@/lib/utils";
 
 interface TranscodeTabProps {
   transcodeData: any[];
@@ -19,8 +20,18 @@ export default function TranscodeTab({
   const columns = [
     { title: "项目", dataIndex: "project", key: "project" },
     { title: "域名", dataIndex: "domain", key: "domain" },
-    { title: "转码时长(分钟)", dataIndex: "duration", key: "duration" },
-    { title: "更新时间", dataIndex: "updateTime", key: "updateTime" },
+    {
+      title: "转码时长(分钟)",
+      dataIndex: "duration",
+      key: "duration",
+      render: (val: number) => formatDuration(val, 0),
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updateTime",
+      key: "updateTime",
+      render: (val: string) => formatDate(val),
+    },
   ];
 
   return (
@@ -30,15 +41,14 @@ export default function TranscodeTab({
           <Card>
             <Statistic
               title="总转码时长"
-              value={totalDuration}
-              suffix="分钟"
+              value={formatDuration(totalDuration, 0)}
               prefix={<ClockCircleOutlined />}
             />
           </Card>
         </Col>
         <Col span={12}>
           <Card>
-            <Statistic title="转码任务数" value={jobCount} />
+            <Statistic title="转码任务数" value={formatCount(jobCount)} />
           </Card>
         </Col>
       </Row>

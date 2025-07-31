@@ -1,5 +1,6 @@
 import { Card, Row, Col, Statistic, Table } from "antd";
 import { PictureOutlined } from "@ant-design/icons";
+import { formatCount, formatDate } from "@/lib/utils";
 
 interface ScreenshotTabProps {
   screenshotData: any[];
@@ -19,8 +20,18 @@ export default function ScreenshotTab({
   const columns = [
     { title: "项目", dataIndex: "project", key: "project" },
     { title: "域名", dataIndex: "domain", key: "domain" },
-    { title: "截图张数", dataIndex: "count", key: "count" },
-    { title: "更新时间", dataIndex: "updateTime", key: "updateTime" },
+    {
+      title: "截图张数",
+      dataIndex: "count",
+      key: "count",
+      render: (val: number) => formatCount(val),
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updateTime",
+      key: "updateTime",
+      render: (val: string) => formatDate(val),
+    },
   ];
 
   return (
@@ -30,14 +41,14 @@ export default function ScreenshotTab({
           <Card>
             <Statistic
               title="总截图张数"
-              value={totalScreenshots}
+              value={formatCount(totalScreenshots)}
               prefix={<PictureOutlined />}
             />
           </Card>
         </Col>
         <Col span={12}>
           <Card>
-            <Statistic title="项目数" value={projectCount} />
+            <Statistic title="项目数" value={formatCount(projectCount)} />
           </Card>
         </Col>
       </Row>

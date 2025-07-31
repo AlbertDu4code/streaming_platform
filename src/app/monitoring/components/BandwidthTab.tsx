@@ -10,7 +10,7 @@ import {
 import BandwidthChart from "./BandwidthChart";
 import BandwidthBarChart from "./BandwidthBarChart";
 import BandwidthTable from "./BandwidthTable";
-import { formatBandwidth } from "@/lib/utils";
+import { formatBandwidth, formatDuration, formatCount } from "@/lib/utils";
 import { ChartData } from "./types";
 
 interface BandwidthTabProps {
@@ -80,8 +80,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="总观看时长"
-              value={totalDuration}
-              suffix="分钟"
+              value={formatDuration(totalDuration)}
               prefix={<ClockCircleOutlined style={{ color: "#ff7d00" }} />}
             />
           </Card>
@@ -90,7 +89,7 @@ export default function BandwidthTab({
           <Card>
             <Statistic
               title="活跃服务"
-              value={activeServices}
+              value={formatCount(activeServices)}
               suffix="个"
               prefix={<DesktopOutlined style={{ color: "#722ed1" }} />}
             />

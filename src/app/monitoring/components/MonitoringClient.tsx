@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { Layout, Card, Tabs, message } from "antd";
 import AppHeader from "./Header";
 import FilterPanel from "./FilterPanel";
 import TabContent from "./TabContent";
-import { User } from "./types";
+import { User, FilterState } from "./types";
 import { useMonitoringData } from "./hooks/useMonitoringData";
 import { useFilterState } from "./hooks/useFilterState";
+import { fetcher } from "@/lib/api-utils";
+import { HttpError } from "@/lib/errors";
 
 const { Content } = Layout;
 
@@ -20,7 +22,7 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   const [activeTab, setActiveTab] = useState("bandwidth");
   const [viewMode, setViewMode] = useState("line");
 
-  const { filters, updateFilter, setTimeRange } = useFilterState();
+  const { filters, setFilters, setTimeRange } = useFilterState();
   const {
     loading,
     chartData,
@@ -35,46 +37,34 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
     guideData,
     options,
     loadBandwidthData,
+    loadOptions,
+    loadStreamingData,
+    loadStorageData,
+    loadLiveData,
+    loadDurationData,
+    loadScreenshotData,
+    loadPushData,
+    loadTranscodeData,
+    loadDirectData,
+    loadGuideData,
   } = useMonitoringData();
 
-  // 处理筛选条件变化
-  const handleFilterChange = async (key: keyof typeof filters, value: any) => {
-    updateFilter(key, value);
-
-    // 如果是项目变化，立即加载数据
-    if (key === "project") {
-      await loadBandwidthData({ ...filters, [key]: value });
-    }
-  };
-
-  // 处理时间范围变化
-  const handleDateRangeChange = async (dateStrings: string[], dates: any[]) => {
-    const newDateRange =
-      dateStrings && dateStrings.length === 2 ? dateStrings : null;
-    updateFilter("dateRange", newDateRange);
-
-    if (filters.project) {
-      await loadBandwidthData({ ...filters, dateRange: newDateRange });
-    }
-  };
-
-  // 处理粒度变化
-  const handleGranularityChange = async (granularity: string) => {
-    updateFilter("granularity", granularity);
-
-    if (filters.project) {
-      await loadBandwidthData({ ...filters, granularity });
-    }
+  // 统一处理筛选条件变化
+  const handleFilterChange = (newFilters: Partial<FilterState>) => {
+    setFilters((prevFilters) => ({ ...prevFilters, ...newFilters }));
   };
 
   // 处理时间范围快捷选择
-  const handleTimeRangeChange = async (timeRange: string) => {
+  const handleTimeRangeChange = (timeRange: string) => {
     setTimeRange(timeRange);
-
-    if (filters.project) {
-      await loadBandwidthData({ ...filters, timeRange });
-    }
   };
+
+  // 自动根据筛选条件加载数据
+  useEffect(() => {
+    if (filters.project) {
+      loadBandwidthData(filters);
+    }
+  }, [filters, loadBandwidthData]);
 
   // 处理登出
   const handleLogout = async () => {
@@ -84,12 +74,28 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
   // 处理数据初始化
   const handleInitData = async () => {
     try {
-      const response = await fetch("/api/init-data", { method: "POST" });
-      if (!response.ok) throw new Error("初始化失败");
-      await response.json();
+      await fetcher("/api/init-data", { method: "POST" });
       message.success("数据初始化成功，请刷新页面查看数据");
+      // 重新加载所有数据
+      await Promise.all([
+        loadOptions(),
+        loadStreamingData(),
+        loadStorageData(),
+        loadLiveData(),
+        loadDurationData(),
+        loadScreenshotData(),
+        loadPushData(),
+        loadTranscodeData(),
+        loadDirectData(),
+        loadGuideData(),
+        loadBandwidthData(filters),
+      ]);
     } catch (error) {
-      message.error("数据初始化失败，请检查InfluxDB连接");
+      if (error instanceof HttpError) {
+        message.error(error.message);
+      } else {
+        message.error("数据初始化失败，请检查InfluxDB连接");
+      }
     }
   };
 
@@ -142,13 +148,22 @@ export default function MonitoringClient({ user }: MonitoringClientProps) {
             dateRange={filters.dateRange}
             granularity={filters.granularity}
             timeRange={filters.timeRange}
-            onProjectChange={(value) => handleFilterChange("project", value)}
-            onTagChange={(value) => handleFilterChange("tag", value)}
-            onDomainChange={(value) => handleFilterChange("domain", value)}
-            onRegionChange={(value) => handleFilterChange("region", value)}
-            onProtocolChange={(value) => handleFilterChange("protocol", value)}
-            onDateRangeChange={handleDateRangeChange}
-            onGranularityChange={handleGranularityChange}
+            onProjectChange={(value) => handleFilterChange({ project: value })}
+            onTagChange={(value) => handleFilterChange({ tag: value })}
+            onDomainChange={(value) => handleFilterChange({ domain: value })}
+            onRegionChange={(value) => handleFilterChange({ region: value })}
+            onProtocolChange={(value) =>
+              handleFilterChange({ protocol: value })
+            }
+            onDateRangeChange={(dateStrings) =>
+              handleFilterChange({
+                dateRange:
+                  dateStrings && dateStrings.length === 2 ? dateStrings : null,
+              })
+            }
+            onGranularityChange={(value) =>
+              handleFilterChange({ granularity: value })
+            }
             onTimeRangeChange={handleTimeRangeChange}
             projectOptions={options.projectOptions}
             tagOptions={options.tagOptions}

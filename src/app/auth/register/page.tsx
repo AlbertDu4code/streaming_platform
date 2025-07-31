@@ -23,6 +23,8 @@ import {
   CloseCircleOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
+import { fetcher } from "@/lib/api-utils";
+import { HttpError } from "@/lib/errors";
 
 const { Title, Text } = Typography;
 
@@ -33,14 +35,16 @@ interface RegisterFormData {
   confirmPassword: string;
 }
 
+interface ApiErrorDetails {
+  [key: string]: {
+    _errors?: string[];
+  };
+}
+
 interface ApiError {
   error?: string;
   message?: string;
-  details?: {
-    [key: string]: {
-      _errors?: string[];
-    };
-  };
+  details?: ApiErrorDetails;
 }
 
 export default function RegisterPage() {
@@ -78,63 +82,13 @@ export default function RegisterPage() {
   const { checks, strength, strengthPercent, strengthColor, strengthText } =
     getPasswordStrength(password);
 
-  const validateName = (name: string): string | null => {
-    if (!name.trim()) return "请输入姓名";
-    if (name.trim().length < 2) return "姓名至少需要2个字符";
-    if (name.trim().length > 50) return "姓名不能超过50个字符";
-    if (!/^[a-zA-Z\u4e00-\u9fa5\s]+$/.test(name.trim())) {
-      return "姓名只能包含中文、英文和空格";
-    }
-    return null;
-  };
-
-  const validateEmail = (email: string): string | null => {
-    if (!email.trim()) return "请输入邮箱地址";
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "请输入有效的邮箱地址";
-    if (email.length > 100) return "邮箱地址不能超过100个字符";
-    return null;
-  };
-
-  const validatePassword = (password: string): string | null => {
-    if (!password) return "请输入密码";
-    if (password.length < 6) return "密码至少需要6个字符";
-    if (password.length > 100) return "密码不能超过100个字符";
-    if (!/(?=.*[a-z])(?=.*\d)/.test(password)) {
-      return "密码必须包含至少一个小写字母和一个数字";
-    }
-    return null;
-  };
-
   const handleSubmit = async (values: RegisterFormData) => {
     setLoading(true);
     setErrorMessage("");
     setFieldErrors({});
 
     try {
-      // 前端验证
-      const nameError = validateName(values.name);
-      const emailError = validateEmail(values.email);
-      const passwordError = validatePassword(values.password);
-
-      const errors: { [key: string]: string } = {};
-      if (nameError) errors.name = nameError;
-      if (emailError) errors.email = emailError;
-      if (passwordError) errors.password = passwordError;
-
-      if (values.password !== values.confirmPassword) {
-        errors.confirmPassword = "两次输入的密码不一致";
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
-        setLoading(false);
-        return;
-      }
-
-      console.log("尝试注册:", values.email);
-
-      const response = await fetch("/api/auth/register", {
+      await fetcher<ApiError>("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,59 +101,41 @@ export default function RegisterPage() {
         }),
       });
 
-      const data: ApiError = await response.json();
-      console.log("注册响应:", data);
+      message.success("注册成功！正在跳转到登录页面...");
 
-      if (response.ok) {
-        try {
-          message.success("注册成功！正在跳转到登录页面...");
-        } catch (msgError) {
-          console.log("注册成功！正在跳转到登录页面...");
-        }
-
-        // 延迟跳转，让用户看到成功消息
-        setTimeout(() => {
-          router.push("/auth/login?message=registration-success");
-        }, 1500);
-      } else {
-        // 处理API错误
-        if (data.details) {
-          // 处理字段验证错误
-          const newFieldErrors: { [key: string]: string } = {};
-          Object.keys(data.details).forEach((field) => {
-            const fieldError = data.details![field];
-            if (
-              fieldError &&
-              fieldError._errors &&
-              fieldError._errors.length > 0
-            ) {
-              newFieldErrors[field] = fieldError._errors[0];
-            }
-          });
-
-          if (Object.keys(newFieldErrors).length > 0) {
-            setFieldErrors(newFieldErrors);
-          } else {
-            setErrorMessage(data.message || data.error || "注册失败");
-          }
-        } else {
-          setErrorMessage(data.message || data.error || "注册失败");
-        }
-
-        try {
-          message.error(data.message || data.error || "注册失败");
-        } catch (msgError) {
-          console.error(data.message || data.error || "注册失败");
-        }
-      }
+      // 延迟跳转，让用户看到成功消息
+      setTimeout(() => {
+        router.push("/auth/login?message=registration-success");
+      }, 1500);
     } catch (error) {
-      console.error("注册过程中发生错误:", error);
-      setErrorMessage("注册过程中发生网络错误，请检查网络连接后重试");
-      try {
-        message.error("注册过程中发生错误");
-      } catch (msgError) {
-        console.error("注册过程中发生错误:", error);
+      if (error instanceof HttpError) {
+        try {
+          const errorData: ApiError = JSON.parse(error.message);
+          if (errorData.details) {
+            const newFieldErrors: { [key: string]: string } = {};
+            Object.keys(errorData.details).forEach((field) => {
+              const fieldError = errorData.details?.[field];
+              if (fieldError?._errors?.length) {
+                newFieldErrors[field] = fieldError._errors[0];
+              }
+            });
+            if (Object.keys(newFieldErrors).length > 0) {
+              setFieldErrors(newFieldErrors);
+              return; // 阻止显示全局错误消息
+            }
+          }
+          setErrorMessage(errorData.message || "注册失败");
+          message.error(errorData.message || "注册失败");
+        } catch (e) {
+          setErrorMessage(error.message);
+          message.error(error.message);
+        }
+      } else {
+        const genericMessage = "注册过程中发生网络错误，请检查网络连接后重试";
+        setErrorMessage(genericMessage);
+        message.error(genericMessage);
       }
+      console.error("注册过程中发生错误:", error);
     } finally {
       setLoading(false);
     }
@@ -237,7 +173,9 @@ export default function RegisterPage() {
           <Form
             form={form}
             layout="vertical"
-            onFinish={handleSubmit}
+            onFinish={(values) => {
+              void handleSubmit(values as RegisterFormData);
+            }}
             autoComplete="off"
             onFieldsChange={clearErrors}
           >
@@ -250,6 +188,10 @@ export default function RegisterPage() {
                 { required: true, message: "请输入姓名" },
                 { min: 2, message: "姓名至少需要2个字符" },
                 { max: 50, message: "姓名不能超过50个字符" },
+                {
+                  pattern: /^[a-zA-Z\u4e00-\u9fa5\s]+$/,
+                  message: "姓名只能包含中文、英文和空格",
+                },
               ]}
             >
               <Input
@@ -288,6 +230,10 @@ export default function RegisterPage() {
                 { required: true, message: "请输入密码" },
                 { min: 6, message: "密码至少需要6个字符" },
                 { max: 100, message: "密码不能超过100个字符" },
+                {
+                  pattern: /(?=.*[a-z])(?=.*\d)/,
+                  message: "密码必须包含至少一个小写字母和一个数字",
+                },
               ]}
             >
               <Input.Password
@@ -369,11 +315,12 @@ export default function RegisterPage() {
             <Form.Item
               label="确认密码"
               name="confirmPassword"
+              dependencies={["password"]}
               validateStatus={fieldErrors.confirmPassword ? "error" : ""}
               help={fieldErrors.confirmPassword}
-              dependencies={["password"]}
+              hasFeedback
               rules={[
-                { required: true, message: "请确认密码" },
+                { required: true, message: "请再次输入密码" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue("password") === value) {

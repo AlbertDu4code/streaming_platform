@@ -1,5 +1,6 @@
 import { Card, Row, Col, Statistic, Table } from "antd";
 import { BarChartOutlined } from "@ant-design/icons";
+import { formatBandwidth, formatCount, formatDate } from "@/lib/utils";
 
 interface DirectBandwidthTabProps {
   directBandwidthData: any[];
@@ -18,8 +19,18 @@ export default function DirectBandwidthTab({
 
   const columns = [
     { title: "流名称", dataIndex: "streamName", key: "streamName" },
-    { title: "带宽(Mbps)", dataIndex: "bandwidth", key: "bandwidth" },
-    { title: "更新时间", dataIndex: "updateTime", key: "updateTime" },
+    {
+      title: "带宽(Mbps)",
+      dataIndex: "bandwidth",
+      key: "bandwidth",
+      render: (val: number) => formatBandwidth(val * 1000000, 2),
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updateTime",
+      key: "updateTime",
+      render: (val: string) => formatDate(val),
+    },
   ];
 
   return (
@@ -29,15 +40,14 @@ export default function DirectBandwidthTab({
           <Card>
             <Statistic
               title="总直播带宽"
-              value={totalBandwidth}
-              suffix="Mbps"
+              value={formatBandwidth(totalBandwidth * 1000000, 2)}
               prefix={<BarChartOutlined />}
             />
           </Card>
         </Col>
         <Col span={12}>
           <Card>
-            <Statistic title="直播流数" value={streamCount} />
+            <Statistic title="直播流数" value={formatCount(streamCount)} />
           </Card>
         </Col>
       </Row>

@@ -1,5 +1,6 @@
 import { Card, Row, Col, Statistic, Table } from "antd";
 import { DatabaseOutlined, FolderOpenOutlined } from "@ant-design/icons";
+import { formatBytes, formatCount, formatDate } from "@/lib/utils";
 
 interface StorageTabProps {
   storageData: any[];
@@ -16,8 +17,18 @@ export default function StorageTab({ storageData, loading }: StorageTabProps) {
   const columns = [
     { title: "项目", dataIndex: "project", key: "project" },
     { title: "域名", dataIndex: "domain", key: "domain" },
-    { title: "存储用量(GB)", dataIndex: "size", key: "size" },
-    { title: "更新时间", dataIndex: "updateTime", key: "updateTime" },
+    {
+      title: "存储用量(GB)",
+      dataIndex: "size",
+      key: "size",
+      render: (val: number) => formatBytes(val * 1024 * 1024 * 1024, 2),
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updateTime",
+      key: "updateTime",
+      render: (val: string) => formatDate(val),
+    },
   ];
 
   return (
@@ -26,9 +37,8 @@ export default function StorageTab({ storageData, loading }: StorageTabProps) {
         <Col span={8}>
           <Card>
             <Statistic
-              title="总存储用量"
-              value={totalStorage}
-              suffix="GB"
+              title="总存储用量(GB)"
+              value={formatBytes(totalStorage * 1024 * 1024 * 1024, 2)}
               prefix={<DatabaseOutlined />}
             />
           </Card>
@@ -37,7 +47,7 @@ export default function StorageTab({ storageData, loading }: StorageTabProps) {
           <Card>
             <Statistic
               title="项目数"
-              value={projectCount}
+              value={formatCount(projectCount)}
               prefix={<FolderOpenOutlined />}
             />
           </Card>
@@ -46,7 +56,7 @@ export default function StorageTab({ storageData, loading }: StorageTabProps) {
           <Card>
             <Statistic
               title="域名数"
-              value={domainCount}
+              value={formatCount(domainCount)}
               prefix={<FolderOpenOutlined />}
             />
           </Card>

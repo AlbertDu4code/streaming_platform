@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { HttpError } from "./errors";
 
 // 统一的API响应格式
 export interface ApiResponse<T = any> {
@@ -6,6 +7,24 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   details?: any;
+}
+
+// 客户端数据请求函数
+export async function fetcher<T>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({
+      message: `HTTP error! status: ${response.status}`,
+    }));
+    throw new HttpError(
+      errorBody.message || "An unknown error occurred",
+      response.status
+    );
+  }
+  return response.json();
 }
 
 // 统一的错误处理函数
