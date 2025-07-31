@@ -189,12 +189,32 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
           pageSize: params.pageSize?.toString() || "20",
         });
 
+        // 合并外部和ProTable自身的过滤器
+        const currentFilters = { ...safeFilters, ...params };
+
+        // 增强的默认时间范围处理
+        if (
+          !currentFilters.dateRange ||
+          !Array.isArray(currentFilters.dateRange) ||
+          currentFilters.dateRange.length !== 2 ||
+          !currentFilters.dateRange[0] ||
+          !currentFilters.dateRange[1]
+        ) {
+          const now = new Date();
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          currentFilters.dateRange = [
+            yesterday.toISOString(),
+            now.toISOString(),
+          ];
+          console.log("使用默认时间范围:", currentFilters.dateRange);
+        }
+
         // 正确处理筛选条件
-        if (safeFilters) {
-          Object.entries(safeFilters).forEach(([key, value]) => {
+        if (currentFilters) {
+          Object.entries(currentFilters).forEach(([key, value]) => {
             console.log(`处理筛选条件 ${key}:`, value, typeof value);
 
-            if (value !== undefined && value !== null) {
+            if (value !== undefined && value !== null && value !== "") {
               if (
                 key === "dateRange" &&
                 Array.isArray(value) &&
