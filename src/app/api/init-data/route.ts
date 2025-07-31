@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       const point = new Point("transcode_duration")
         .tag("id", `transcode_${i + 1}`)
         .tag("streamName", generateRandomString("transcode"))
-        .intField("duration", Math.floor(generateRandomData(300, 3600)))
+        .floatField("duration", generateRandomData(300, 3600))
         .tag("format", Math.random() > 0.5 ? "H.264" : "H.265")
         .tag(
           "resolution",
