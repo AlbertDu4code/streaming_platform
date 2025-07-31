@@ -21,6 +21,24 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
   // 添加调试日志
   console.log("BandwidthTable 接收到的 filters:", filters);
 
+  // 确保 dateRange 有默认值
+  const safeFilters = {
+    ...(filters || {}),
+    dateRange:
+      filters?.dateRange ||
+      (() => {
+        const now = new Date();
+        const startDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        return [startDate.toISOString(), now.toISOString()];
+      })(),
+  };
+
+  console.log("BandwidthTable 处理后的 safeFilters:", safeFilters);
+
   const safeBandwidthFormat = (value: number | undefined): string => {
     if (typeof value !== "number" || isNaN(value)) {
       return "0.000 Mbps";
@@ -172,8 +190,8 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
         });
 
         // 正确处理筛选条件
-        if (filters) {
-          Object.entries(filters).forEach(([key, value]) => {
+        if (safeFilters) {
+          Object.entries(safeFilters).forEach(([key, value]) => {
             console.log(`处理筛选条件 ${key}:`, value, typeof value);
 
             if (value !== undefined && value !== null) {
@@ -241,7 +259,7 @@ export default function BandwidthTable({ filters }: BandwidthTableProps) {
       search={false}
       headerTitle="带宽数据详情"
       toolBarRender={false}
-      params={filters} // 将外部筛选条件作为 ProTable 的查询参数
+      params={safeFilters} // 将处理后的筛选条件作为 ProTable 的查询参数
     />
   );
 }

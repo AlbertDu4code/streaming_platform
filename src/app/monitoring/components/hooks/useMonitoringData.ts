@@ -67,7 +67,10 @@ export const useMonitoringData = () => {
 
   // 加载带宽数据
   const loadBandwidthData = useCallback(async (filters: FilterState) => {
+    console.log("🔍 loadBandwidthData 被调用，filters:", filters);
+
     if (!filters.project) {
+      console.log("❌ 没有选择项目，跳过数据加载");
       setChartData([]);
       return;
     }
@@ -85,12 +88,25 @@ export const useMonitoringData = () => {
         params.append("domain", filters.domain);
       if (filters.region && filters.region !== "all")
         params.append("region", filters.region);
+
+      console.log("⏰ 检查 dateRange:", filters.dateRange);
       if (filters.dateRange && filters.dateRange.length === 2) {
+        console.log(
+          "✅ 添加时间参数:",
+          filters.dateRange[0],
+          "到",
+          filters.dateRange[1]
+        );
         params.append("startTime", filters.dateRange[0]);
         params.append("endTime", filters.dateRange[1]);
+      } else {
+        console.log("❌ dateRange 无效，将使用后端默认值");
       }
+
       if (filters.granularity)
         params.append("granularity", filters.granularity);
+
+      console.log("🌐 请求 URL:", `/api/data?${params.toString()}`);
 
       const result = await fetcher<ApiResponse<ChartData[]>>(
         `/api/data?${params.toString()}`

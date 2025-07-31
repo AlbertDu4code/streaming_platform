@@ -54,6 +54,12 @@ export async function GET(request: NextRequest) {
     const startTime = searchParams.get("startTime") || "-7d";
     const endTime = searchParams.get("endTime") || "now()";
 
+    console.log("🔍 /api/data 接收到请求:");
+    console.log("- type:", type);
+    console.log("- startTime:", startTime);
+    console.log("- endTime:", endTime);
+    console.log("- 所有参数:", Array.from(searchParams.entries()));
+
     // 验证必需参数
     const validationError = validateRequiredParams(searchParams, ["type"]);
     if (validationError) {
@@ -105,8 +111,8 @@ export async function GET(request: NextRequest) {
           );
           return createSuccessResponse(statsData);
         } else {
-          const { queryBandwidthData } = await import("@/lib/influxdb");
-          const data = await queryBandwidthData(
+          const { queryBandwidthDataLegacy } = await import("@/lib/influxdb");
+          const data = await queryBandwidthDataLegacy(
             startTime,
             endTime,
             filters,

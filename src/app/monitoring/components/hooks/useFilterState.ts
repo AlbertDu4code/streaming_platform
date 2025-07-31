@@ -85,7 +85,9 @@ export const useFilterState = () => {
 
   // 添加调试日志
   useEffect(() => {
-    console.log("当前 filters 状态:", filters);
+    console.log("📊 useFilterState - 当前 filters 状态:", filters);
+    console.log("📊 useFilterState - dateRange:", filters.dateRange);
+    console.log("📊 useFilterState - timeRange:", filters.timeRange);
   }, [filters]);
 
   return {
