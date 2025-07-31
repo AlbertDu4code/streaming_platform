@@ -368,6 +368,122 @@ export async function getBandwidthStats(
   }
 }
 
+// =================================================================
+// 全局修复：为所有缺失的查询函数添加实现
+// =================================================================
+
+export async function queryLiveStreamData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "live_stream_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryTranscodeDurationData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "transcode_duration_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryScreenshotData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "screenshot_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryPushStreamData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "push_stream_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryTranscodeBandwidthData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "transcode_bandwidth_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryDirectBandwidthData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "direct_bandwidth_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
+export async function queryGuideData(
+  startTime: string,
+  endTime: string,
+  limit: number = 100
+): Promise<any[]> {
+  const query = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> ${formatTimeRange(startTime, endTime)}
+      |> filter(fn: (r) => r._measurement == "guide_data")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> sort(columns: ["_time"], desc: true)
+      |> limit(n: ${limit})
+  `;
+  return await queryApi.collectRows(query);
+}
+
 // 查询存储用量数据
 export async function queryStorageData(limit: number = 500): Promise<any[]> {
   const query = `
